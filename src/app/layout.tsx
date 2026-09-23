@@ -29,6 +29,31 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
+      <head>
+        {/*
+          Vercel Web Analytics, loaded as a plain script rather than via
+          @vercel/analytics. The package depends on a Svelte Vite plugin that
+          requires vite 8, while vitest 2 pins vite 5 — installing it means
+          --legacy-peer-deps and a test runner on an unsupported dependency
+          tree, which is too high a price for a script tag.
+
+          This also activates /_vercel/insights/event. That route 404s until a
+          page loads this script, which is why the custom events in
+          lib/analytics.ts had nowhere to go.
+
+          defer so it never competes with the tool code for parse time: the
+          person came here to compress a PDF, not to be measured.
+        */}
+        <script defer src="/_vercel/insights/script.js" />
+
+        {/*
+          Speed Insights reports real Core Web Vitals from actual visitors.
+          Its route already resolved before this was added, but nothing on the
+          site loaded the script, so it was measuring nobody — the same silent
+          gap as the analytics events.
+        */}
+        <script defer src="/_vercel/speed-insights/script.js" />
+      </head>
       <body className="flex min-h-full flex-col bg-canvas text-ink">
         <a
           href="#main"
