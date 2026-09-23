@@ -314,6 +314,41 @@ export const TOOLS: Tool[] = [
     ],
   },
   {
+    slug: "png-to-pdf",
+    name: "PNG → PDF",
+    tagline: "Create a PDF from PNGs",
+    heading: "PNG to PDF",
+    subtitle: "Turn your PNG images into a single PDF.",
+    metaTitle: "PNG to PDF — Convert PNG images to PDF online, free",
+    metaDescription:
+      "Combine PNG images into one PDF. Drag to reorder, pick a page size, and download. No signup, and nothing leaves your device.",
+    category: "image",
+    icon: "pdf",
+    engine: "client",
+    accept: "image/png,.png",
+    acceptLabel: "PNG",
+    multiple: true,
+    maxFileSizeMb: 50,
+    action: "Create PDF",
+    actionProgressive: "Building your PDF",
+    successHeadline: "PDF created",
+    featured: false,
+    faq: [
+      {
+        q: "Are transparent areas kept?",
+        a: "PDF pages are opaque, so any transparency is flattened onto a white background. That matches how the page will print.",
+      },
+      {
+        q: "Can I control the page order?",
+        a: "Yes. Drag the images into the order you want before creating the PDF.",
+      },
+      {
+        q: "Can I mix in JPGs as well?",
+        a: "This page accepts PNG files. To combine different image formats in one document, use the Image to PDF tool.",
+      },
+    ],
+  },
+  {
     slug: "pdf-to-text",
     name: "PDF → Text",
     tagline: "Extract plain text",
