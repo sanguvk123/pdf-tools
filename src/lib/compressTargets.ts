@@ -21,6 +21,8 @@ export interface CompressTarget {
 }
 
 export const COMPRESS_TARGETS: CompressTarget[] = [
+  { slug: "5mb", label: "5 MB", bytes: 5_000_000, level: "recommended" },
+  { slug: "2mb", label: "2 MB", bytes: 2_000_000, level: "recommended" },
   { slug: "1mb", label: "1 MB", bytes: 1_000_000, level: "recommended" },
   { slug: "500kb", label: "500 KB", bytes: 500_000, level: "smaller" },
   { slug: "200kb", label: "200 KB", bytes: 200_000, level: "smallest" },
