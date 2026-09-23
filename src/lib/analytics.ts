@@ -76,11 +76,26 @@ const ENDPOINT = "/_vercel/insights/event";
  * about a tool, not about their file.
  */
 function send(entry: QueuedEvent): void {
+  /**
+   * The wire format is Vercel's, not ours, and the field names are not
+   * guessable — a readable {name, url, data} body is rejected with
+   * "body must have required property 'o'". These were read out of the
+   * script the endpoint itself serves and confirmed with a 200 against
+   * production before being written here:
+   *
+   *   o     page URL          en  event name
+   *   sv    schema version    ed  event data
+   *   sdkn  sender name       ts  client timestamp
+   *   sdkv  sender version
+   */
   const body = JSON.stringify({
-    name: entry.event,
-    // The endpoint expects the page this happened on.
-    url: window.location.href,
-    data: Object.fromEntries(
+    o: window.location.href,
+    sv: "1.0.0",
+    sdkn: "@vercel/analytics",
+    sdkv: "1.0.0",
+    ts: entry.timestamp,
+    en: entry.event,
+    ed: Object.fromEntries(
       Object.entries(entry).filter(
         ([key, value]) =>
           key !== "event" && key !== "timestamp" && value !== undefined,

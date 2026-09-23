@@ -7,9 +7,24 @@ import { sizeBucketKb, track } from "@/lib/analytics";
  * server. These assert what is on the wire, not what the UI claims.
  */
 
+/**
+ * Vercel's wire format. Short keys, and not guessable: a readable
+ * {name, url, data} body is rejected with "body must have required
+ * property 'o'". Asserting the real names is the point — the earlier
+ * version of this test passed against a payload production refused.
+ */
 interface Beacon {
   url: string;
-  payload: { name: string; url: string; data: Record<string, unknown> };
+  payload: {
+    /** Page URL. */
+    o: string;
+    /** Event name. */
+    en: string;
+    /** Event data. */
+    ed: Record<string, unknown>;
+    ts: number;
+    sdkn: string;
+  };
 }
 
 const sent: Beacon[] = [];
@@ -51,7 +66,25 @@ describe("analytics transport", () => {
     await flush();
 
     expect(sent).toHaveLength(1);
-    expect(sent[0].payload.name).toBe("tool_view");
+    expect(sent[0].payload.en).toBe("tool_view");
+  });
+
+  it("uses the field names the endpoint actually requires", () => {
+    // Guards the specific failure that shipped: a sensible-looking
+    // {name, url, data} body is rejected with a 400, silently, forever.
+    track("tool_view", { tool: "compress-pdf" });
+
+    return flush().then(() => {
+      const payload = sent[0].payload;
+
+      for (const key of ["o", "sv", "sdkn", "sdkv", "ts", "en", "ed"]) {
+        expect(payload, `missing required key "${key}"`).toHaveProperty(key);
+      }
+
+      expect(payload.o).toBe("https://www.pdftools.shop/compress-pdf");
+      expect(payload).not.toHaveProperty("name");
+      expect(payload).not.toHaveProperty("data");
+    });
   });
 
   it("uses sendBeacon so a download click survives the page closing", async () => {
@@ -116,14 +149,14 @@ describe("analytics transport", () => {
     // Checked against the event data only. The top-level url is the tool page
     // the user is on — "/compress-pdf" legitimately contains ".pdf" — and
     // asserting over the whole payload confuses a route with a document.
-    const data = JSON.stringify(sent[0].payload.data).toLowerCase();
+    const data = JSON.stringify(sent[0].payload.ed).toLowerCase();
 
     for (const forbidden of ["resume", "filename", "content", ".docx"]) {
       expect(data, `event data leaked "${forbidden}"`).not.toContain(forbidden);
     }
 
     // Positively assert the shape: only these keys are ever transmitted.
-    expect(Object.keys(sent[0].payload.data).sort()).toEqual([
+    expect(Object.keys(sent[0].payload.ed).sort()).toEqual([
       "engine",
       "fileCount",
       "fileSizeBucketKb",
