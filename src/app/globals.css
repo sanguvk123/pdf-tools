@@ -2,8 +2,12 @@
 
 /*
  * Design tokens.
- * Restrained palette: light neutral background, near-black text,
- * muted gray secondary, extremely subtle borders, one accent color.
+ *
+ * Neutral surfaces and near-black text carry the layout; colour is reserved
+ * for the four tool categories. Tying hue to category rather than to each
+ * individual tool means the colour tells you something — every compression
+ * tool is violet, every conversion blue — instead of being decoration that
+ * makes fifteen cards look like fifteen unrelated products.
  */
 @theme {
   --color-canvas: #fbfbfa;
@@ -20,6 +24,20 @@
   --color-success-soft: #e8f6f0;
   --color-danger: #c0392f;
   --color-danger-soft: #fdeeec;
+
+  /*
+   * Category palette. Each pair is a saturated foreground for the glyph and a
+   * tinted background for the tile behind it. All four foregrounds clear
+   * 4.5:1 on their own tint, so the icons stay legible rather than decorative.
+   */
+  --color-cat-compress: #6d28d9;
+  --color-cat-compress-soft: #f3efff;
+  --color-cat-convert: #1d4ed8;
+  --color-cat-convert-soft: #eaf0ff;
+  --color-cat-organize: #0f766e;
+  --color-cat-organize-soft: #e6f5f3;
+  --color-cat-edit: #c2410c;
+  --color-cat-edit-soft: #fdeee5;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", sans-serif;

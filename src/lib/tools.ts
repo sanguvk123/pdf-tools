@@ -18,6 +18,39 @@ export type ToolCategory = "compress" | "convert" | "organize" | "edit";
 /** Where the work happens. The UI never exposes this to the user. */
 export type ToolEngine = "client" | "server";
 
+/**
+ * Tailwind classes for each category's colour pair.
+ *
+ * Written as complete literal class names because Tailwind scans source text
+ * and cannot see a class assembled at runtime from a template string — those
+ * would be silently dropped from the stylesheet and render as unstyled.
+ */
+export const CATEGORY_STYLES: Record<
+  ToolCategory,
+  { tile: string; text: string; dot: string }
+> = {
+  compress: {
+    tile: "bg-cat-compress-soft text-cat-compress",
+    text: "text-cat-compress",
+    dot: "bg-cat-compress",
+  },
+  convert: {
+    tile: "bg-cat-convert-soft text-cat-convert",
+    text: "text-cat-convert",
+    dot: "bg-cat-convert",
+  },
+  organize: {
+    tile: "bg-cat-organize-soft text-cat-organize",
+    text: "text-cat-organize",
+    dot: "bg-cat-organize",
+  },
+  edit: {
+    tile: "bg-cat-edit-soft text-cat-edit",
+    text: "text-cat-edit",
+    dot: "bg-cat-edit",
+  },
+};
+
 export type IconKey =
   | "merge"
   | "compress"
