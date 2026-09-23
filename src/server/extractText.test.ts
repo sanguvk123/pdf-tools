@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { existsSync } from "node:fs";
-import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { extractText } from "@/server/extractText";
 import { PDFDocument, StandardFonts } from "pdf-lib";
@@ -123,13 +121,26 @@ describe("extractText", () => {
     ).toBe(true);
   });
 
-  it("resolves a standard fonts directory that actually exists on disk", async () => {
-    // Mirrors how extractText derives the path, so the two cannot drift apart.
-    const entry = createRequire(import.meta.url).resolve(
-      "pdfjs-dist/legacy/build/pdf.mjs",
-    );
-    const fontsDir = join(dirname(dirname(dirname(entry))), "standard_fonts");
+  it("resolves the worker by walking the filesystem, not require.resolve", async () => {
+    pdfjs.GlobalWorkerOptions.workerSrc = "";
+    await extractText(await pdfWithLines([{ text: "x", x: 50, y: 700 }]));
 
+    const workerSrc = pdfjs.GlobalWorkerOptions.workerSrc;
+
+    // Under Turbopack require.resolve returns a numeric module id rather than
+    // a path, which produced `dirname(83004)` and a 500 in production while
+    // every local check passed. Asserting the shape of the value catches a
+    // regression back to that approach.
+    expect(
+      typeof workerSrc,
+      "workerSrc must be a filesystem path, not a bundler module id",
+    ).toBe("string");
+    expect(workerSrc).toMatch(/pdfjs-dist[/\\]legacy[/\\]build[/\\]pdf\.worker\.mjs$/);
+
+    const fontsDir = workerSrc.replace(
+      /legacy[/\\]build[/\\]pdf\.worker\.mjs$/,
+      "standard_fonts",
+    );
     expect(
       existsSync(fontsDir),
       `standard fonts not found at ${fontsDir} — glyph widths would be wrong for non-embedded fonts`,

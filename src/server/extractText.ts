@@ -1,7 +1,7 @@
 import "server-only";
 import { existsSync } from "node:fs";
-import { createRequire } from "node:module";
 import { dirname, join, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import { ToolError } from "@/lib/errors";
 
 /**
@@ -47,56 +47,49 @@ const COLUMN_GAP_POINTS = 8;
 /**
  * Absolute paths to the pdf.js runtime assets.
  *
- * pdf.js reaches for its worker and font files through dynamic imports and
- * fetches that no bundler can trace statically. Locally that is invisible
+ * pdf.js reaches for its worker and font files through a dynamic import and a
+ * fetch that no bundler can trace statically. Locally that is invisible
  * because the files sit in node_modules; in a serverless bundle only traced
- * files are deployed, so the worker is missing and every document fails to
- * open with a misleading "corrupt file" error.
+ * files are deployed, so the worker is absent and every document fails to
+ * open — reported, misleadingly, as a corrupt upload.
  *
- * Resolving the real installed paths here makes the dependency explicit, so
- * the file tracer includes them in the deployment.
+ * Deliberately NOT using require.resolve: under Turbopack that call is
+ * rewritten to return a numeric module id rather than a path, so it produced
+ *   TypeError: The "path" argument must be of type string. Received type
+ *   number (83004)
+ * in production while working perfectly on a dev machine. Walking the
+ * filesystem is uninteresting but it behaves identically in both places.
  */
 function pdfjsAssetPaths(): {
   workerSrc: string;
   standardFontDataUrl: string;
 } | null {
-  // The literal specifiers below are what makes the tracer include these files
-  // in the deployment bundle, so they must stay statically visible here.
-  const candidates = [
-    () =>
-      createRequire(import.meta.url).resolve("pdfjs-dist/legacy/build/pdf.mjs"),
-    // In a bundled lambda import.meta.url can point at a location with no
-    // node_modules above it. Resolving relative to the working directory
-    // covers that case.
-    () =>
-      createRequire(join(process.cwd(), "index.js")).resolve(
-        "pdfjs-dist/legacy/build/pdf.mjs",
-      ),
-  ];
+  const roots = [process.cwd(), dirname(fileURLToPath(import.meta.url))];
 
-  for (const resolveEntry of candidates) {
-    let entry: string;
-    try {
-      entry = resolveEntry();
-    } catch {
-      continue;
+  for (const root of roots) {
+    // Walk upwards looking for the installed package, which in a lambda sits
+    // above the bundled chunk rather than beside it.
+    let dir = root;
+    for (let depth = 0; depth < 8; depth++) {
+      const packageDir = join(dir, "node_modules", "pdfjs-dist");
+      const workerSrc = join(packageDir, "legacy", "build", "pdf.worker.mjs");
+
+      if (existsSync(workerSrc)) {
+        return {
+          workerSrc,
+          // pdf.js expects a directory, with the trailing separator.
+          standardFontDataUrl: join(packageDir, "standard_fonts") + sep,
+        };
+      }
+
+      const parent = dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
     }
-
-    const buildDir = dirname(entry);
-    const packageDir = dirname(dirname(buildDir));
-    const workerSrc = join(buildDir, "pdf.worker.mjs");
-    if (!existsSync(workerSrc)) continue;
-
-    return {
-      workerSrc,
-      // pdf.js expects a directory, with the trailing separator.
-      standardFontDataUrl: join(packageDir, "standard_fonts") + sep,
-    };
   }
 
-  // Fall through to pdf.js's own defaults rather than throwing: a wrong path
-  // is worse than no path, and the caller still surfaces a real error if
-  // parsing subsequently fails.
+  // Fall back to pdf.js's own defaults rather than throwing: a wrong path is
+  // worse than none, and a genuine parse failure still surfaces normally.
   return null;
 }
 
