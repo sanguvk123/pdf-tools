@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Faq } from "@/components/Faq";
 import { RelatedTools } from "@/components/RelatedTools";
+import { absoluteUrl } from "@/lib/site";
 import type { Tool } from "@/lib/tools";
 
 interface ToolPageLayoutProps {
@@ -31,7 +32,7 @@ export function ToolPageLayout({ tool, children, about }: ToolPageLayoutProps) {
     "@type": "WebApplication",
     name: tool.heading,
     description: tool.metaDescription,
-    url: `https://pdfutility.app/${tool.slug}`,
+    url: absoluteUrl(`/${tool.slug}`),
     applicationCategory: "UtilitiesApplication",
     operatingSystem: "Any",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },

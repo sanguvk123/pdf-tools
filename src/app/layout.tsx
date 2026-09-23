@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { SITE_ORIGIN } from "@/lib/site";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import "./globals.css";
@@ -11,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://pdfutility.app"),
+  metadataBase: new URL(SITE_ORIGIN),
   title: {
     default: "PDF Utility — PDF tools that just work",
     template: "%s | PDF Utility",

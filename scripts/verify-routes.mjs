@@ -21,7 +21,13 @@
 import { readFile } from "node:fs/promises";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
-const SITEMAP_HOST = "https://pdfutility.app";
+
+/**
+ * Origin the sitemap advertises. Read from the sitemap itself rather than
+ * hardcoded, so this script keeps working after a domain change instead of
+ * silently comparing against a host the site no longer uses.
+ */
+let SITEMAP_HOST = "";
 
 /** Words that carry no intent, so they should not count towards title/H1 overlap. */
 const STOP_WORDS = new Set([
@@ -57,6 +63,18 @@ async function fetchSitemapPaths() {
   const xml = await response.text();
   const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
   if (urls.length === 0) throw new Error("sitemap contained no <loc> entries");
+
+  SITEMAP_HOST = new URL(urls[0]).origin;
+
+  // Every entry must agree on one origin, or canonicals and the sitemap will
+  // disagree about which host owns the content.
+  const foreign = urls.filter((url) => new URL(url).origin !== SITEMAP_HOST);
+  if (foreign.length) {
+    throw new Error(
+      `sitemap mixes origins: ${[...new Set(foreign.map((u) => new URL(u).origin))].join(", ")}`,
+    );
+  }
+
   return urls.map((url) => url.replace(SITEMAP_HOST, "") || "/");
 }
 

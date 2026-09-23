@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
+import { SITE_ORIGIN } from "@/lib/site";
 import { TOOLS } from "@/lib/tools";
 import { COMPRESS_INTENTS } from "@/lib/compressIntents";
 import { COMPRESS_TARGETS } from "@/lib/compressTargets";
 
-const BASE_URL = "https://pdfutility.app";
+const BASE_URL = SITE_ORIGIN;
 
 /**
  * Generated from the tool registry, so a new tool is indexed automatically
