@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "@/components/Button";
+import { ContinueWith } from "@/components/ContinueWith";
 import { FileList } from "@/components/FileList";
 import { RelatedTools } from "@/components/RelatedTools";
 import { UploadDropzone } from "@/components/UploadDropzone";
@@ -14,6 +15,8 @@ import {
 import { downloadOutputs } from "@/lib/download";
 import { track } from "@/lib/analytics";
 import { stripExtension } from "@/lib/format";
+import { takeHandoff } from "@/lib/handoff";
+import { matchesAccept } from "@/lib/validate";
 import type { Tool } from "@/lib/tools";
 import type { ToolRunner } from "@/lib/useToolRunner";
 
@@ -29,6 +32,12 @@ interface ToolShellProps {
   showSizeDelta?: boolean;
   /** Blocks the primary action, e.g. when no pages are selected yet. */
   actionDisabled?: boolean;
+}
+
+/** Wraps a single output Blob as a File, ready to feed into the next tool. */
+function fileFromOutput(result: { outputs: { filename: string; blob: Blob }[] }): File {
+  const output = result.outputs[0];
+  return new File([output.blob], output.filename, { type: output.blob.type });
 }
 
 /**
@@ -50,6 +59,28 @@ export function ToolShell({
   useEffect(() => {
     track("tool_view", { tool: tool.slug, engine: tool.engine });
   }, [tool.slug, tool.engine]);
+
+  // Pick up a file handed over by the previous tool, so the user does not have
+  // to find and re-upload something they just produced. Runs once per mount:
+  // takeHandoff clears the file, and the ref guards against Strict Mode's
+  // double-invoked effects consuming it twice.
+  const claimedHandoff = useRef(false);
+  const { selectFiles } = runner;
+
+  useEffect(() => {
+    if (claimedHandoff.current) return;
+    claimedHandoff.current = true;
+
+    const handoff = takeHandoff();
+    if (!handoff) return;
+
+    // The previous tool filtered by accept, but a stale handoff could still
+    // arrive at a tool that cannot use it. Re-check rather than trust it.
+    if (!matchesAccept(handoff.file, tool.accept)) return;
+
+    selectFiles([handoff.file]);
+    track("file_selected", { tool: tool.slug, source: "handoff" });
+  }, [tool.accept, tool.slug, selectFiles]);
 
   const hasFiles = state.files.length > 0;
   const showWorkspace =
@@ -158,15 +189,20 @@ export function ToolShell({
             />
 
             {/* Offer the next step only once the user has their file. */}
-            {state.downloaded && (
-              <div className="animate-rise mt-6">
-                <RelatedTools
-                  slug={tool.slug}
-                  title="Done with this file?"
-                  compact
-                />
-              </div>
-            )}
+            {state.downloaded &&
+              (state.result.outputs.length === 1 ? (
+                /* One output can be carried straight into the next tool.
+                   With several, "continue" is ambiguous, so just link out. */
+                <ContinueWith tool={tool} file={fileFromOutput(state.result)} />
+              ) : (
+                <div className="animate-rise mt-6">
+                  <RelatedTools
+                    slug={tool.slug}
+                    title="Done with this file?"
+                    compact
+                  />
+                </div>
+              ))}
           </>
         )}
 

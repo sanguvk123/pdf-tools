@@ -122,20 +122,32 @@ export function SuccessState({
       <h2 className="mt-1 text-[20px] font-semibold tracking-tight">{headline}</h2>
 
       {showSizeDelta ? (
-        <>
-          <p className="mt-4 text-[15px] tabular-nums">
-            <span className="text-muted">{formatBytes(result.inputBytes)}</span>
-            <span aria-hidden="true" className="mx-2 text-faint">
-              →
-            </span>
-            <span className="font-medium text-ink">
-              {formatBytes(result.outputBytes)}
-            </span>
+        /* The size change is the whole point of these tools, so it is the
+           largest thing on the screen rather than a footnote. Stacked so the
+           drop reads vertically at a glance. */
+        <div className="mt-5">
+          <p className="text-[15px] text-muted line-through tabular-nums decoration-faint/60">
+            {formatBytes(result.inputBytes)}
           </p>
-          <p className="mt-1 text-[13px] text-muted">
-            {saved > 0 ? `${saved}% smaller` : "Already as small as it gets"}
+          <p
+            aria-hidden="true"
+            className="mx-auto my-0.5 h-4 w-px bg-line-strong"
+          />
+          <p className="text-[30px] leading-none font-semibold tracking-tight tabular-nums">
+            {formatBytes(result.outputBytes)}
           </p>
-        </>
+
+          {saved > 0 ? (
+            <p className="mt-3 inline-block rounded-full bg-success-soft px-3 py-1 text-[13px] font-medium text-success">
+              {saved}% smaller
+            </p>
+          ) : (
+            /* Never dress up a non-result as a win. */
+            <p className="mt-3 text-[13px] text-muted">
+              This file was already as small as it gets
+            </p>
+          )}
+        </div>
       ) : (
         <p className="mt-3 text-[13.5px] text-muted">
           {fileCount === 1
