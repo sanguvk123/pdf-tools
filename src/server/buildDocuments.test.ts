@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCsv, buildDocx } from "@/server/buildDocuments";
+import { buildCsv, buildDocx, buildPlainText } from "@/server/buildDocuments";
 import type { ExtractedDocument } from "@/server/extractText";
 
 function documentOf(pages: string[][]): ExtractedDocument {
@@ -93,5 +93,32 @@ describe("buildCsv", () => {
     const csv = await textOf(buildCsv(documentOf([["a", "b"]])));
 
     expect(csv).toContain("a\r\nb");
+  });
+});
+
+describe("buildPlainText", () => {
+  it("keeps the extracted lines in order", async () => {
+    const txt = await textOf(
+      buildPlainText(documentOf([["First line", "Second line"]])),
+    );
+
+    expect(txt).toContain("First line\nSecond line");
+  });
+
+  it("marks each page so quotes can be traced back to a source page", async () => {
+    const txt = await textOf(
+      buildPlainText(documentOf([["Opening"], ["Appendix"]])),
+    );
+
+    expect(txt).toContain("--- Page 1 ---");
+    expect(txt).toContain("--- Page 2 ---");
+    // Page 1 must come first, and its content must sit under its own marker.
+    expect(txt.indexOf("Opening")).toBeLessThan(txt.indexOf("--- Page 2 ---"));
+  });
+
+  it("labels pages with no selectable text instead of leaving a silent gap", async () => {
+    const txt = await textOf(buildPlainText(documentOf([["Readable"], []])));
+
+    expect(txt).toContain("[No selectable text on this page]");
   });
 });

@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { ToolShell } from "@/components/ToolShell";
 import { useToolRunner } from "@/lib/useToolRunner";
+import type { ConvertTarget } from "@/lib/serverEngine";
 import type { Tool } from "@/lib/tools";
 
 /**
@@ -16,7 +17,7 @@ export function ConvertTool({
   target,
 }: {
   tool: Tool;
-  target: "docx" | "csv";
+  target: ConvertTarget;
 }) {
   const loadEngine = useCallback(async () => {
     const { createServerEngine } = await import("@/lib/serverEngine");

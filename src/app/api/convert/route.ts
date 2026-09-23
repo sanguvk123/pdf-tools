@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { ToolError } from "@/lib/errors";
 import { stripExtension } from "@/lib/format";
 import { extractText } from "@/server/extractText";
-import { buildCsv, buildDocx } from "@/server/buildDocuments";
+import { buildCsv, buildDocx, buildPlainText } from "@/server/buildDocuments";
 
 /**
  * Conversion endpoint for the tools that cannot run in the browser.
@@ -24,6 +24,7 @@ const TARGETS = {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   },
   csv: { extension: "csv", contentType: "text/csv;charset=utf-8" },
+  txt: { extension: "txt", contentType: "text/plain;charset=utf-8" },
 } as const;
 
 type Target = keyof typeof TARGETS;
@@ -47,8 +48,14 @@ export async function POST(request: Request) {
     const bytes = new Uint8Array(await file.arrayBuffer());
     const document = await extractText(bytes);
 
-    const blob =
-      target === "docx" ? await buildDocx(document) : buildCsv(document);
+    let blob: Blob;
+    if (target === "docx") {
+      blob = await buildDocx(document);
+    } else if (target === "txt") {
+      blob = buildPlainText(document);
+    } else {
+      blob = buildCsv(document);
+    }
 
     const { extension, contentType } = TARGETS[target];
     const filename = `${stripExtension(file.name)}.${extension}`;

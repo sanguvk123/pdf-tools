@@ -114,3 +114,27 @@ export function buildCsv(document: ExtractedDocument): Blob {
 function escapeCsvCell(cell: string): string {
   return /[",\r\n]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell;
 }
+
+/**
+ * Builds a plain .txt file from the extracted lines.
+ *
+ * Page boundaries are kept as a blank line and a marker. Extracted text is
+ * usually being searched or quoted, and knowing which page a passage came
+ * from is most of its value; collapsing everything into one stream would
+ * throw that away for no benefit.
+ */
+export function buildPlainText(document: ExtractedDocument): Blob {
+  const sections = document.pages.map((page, index) => {
+    const heading = `--- Page ${index + 1} ---`;
+    // A page with no selectable text is almost always a scan. Saying so is
+    // more useful than an unexplained gap in the output.
+    const body = page.lines.length
+      ? page.lines.join("\n")
+      : "[No selectable text on this page]";
+    return `${heading}\n${body}`;
+  });
+
+  return new Blob([sections.join("\n\n")], {
+    type: "text/plain;charset=utf-8",
+  });
+}

@@ -4,6 +4,9 @@ import { toolErrorFromCode, ToolError } from "@/lib/errors";
 import { pluralize, stripExtension } from "@/lib/format";
 import type { RunFn } from "@/lib/useToolRunner";
 
+/** Output formats the /api/convert endpoint can produce. */
+export type ConvertTarget = "docx" | "csv" | "txt";
+
 /**
  * Engine for the tools that run on the server.
  *
@@ -11,7 +14,7 @@ import type { RunFn } from "@/lib/useToolRunner";
  * cannot tell the difference — which is the point: the user should not have to
  * care where the work happens.
  */
-export function createServerEngine(target: "docx" | "csv"): RunFn {
+export function createServerEngine(target: ConvertTarget): RunFn {
   return async ({ files }, onProgress, signal) => {
     const file = files[0];
     if (!file) throw new ToolError("NO_FILES");

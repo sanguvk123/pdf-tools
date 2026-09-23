@@ -17,6 +17,7 @@ export type IconKey =
   | "split"
   | "word"
   | "excel"
+  | "text"
   | "image"
   | "pdf"
   | "rotate"
@@ -309,6 +310,41 @@ export const TOOLS: Tool[] = [
       {
         q: "Which image formats are supported?",
         a: "JPG and PNG. Other formats can be handled by the Image to PDF tool.",
+      },
+    ],
+  },
+  {
+    slug: "pdf-to-text",
+    name: "PDF → Text",
+    tagline: "Extract plain text",
+    heading: "PDF to Text",
+    subtitle: "Pull the text out of your PDF as a plain .txt file.",
+    metaTitle: "PDF to Text — Extract text from PDF online, free",
+    metaDescription:
+      "Extract the text from a PDF into a plain text file you can search, copy and edit. Page breaks are preserved. Free, no signup.",
+    category: "convert",
+    icon: "text",
+    engine: "server",
+    accept: "application/pdf,.pdf",
+    acceptLabel: "PDF",
+    multiple: false,
+    maxFileSizeMb: 100,
+    action: "Extract text",
+    actionProgressive: "Extracting your text",
+    successHeadline: "Text extracted",
+    featured: false,
+    faq: [
+      {
+        q: "Will this work on a scanned document?",
+        a: "No. A scan is an image of text, not text, so there is nothing to extract. We mark those pages clearly rather than returning a silently empty file. Reading a scan needs OCR, which this tool does not do.",
+      },
+      {
+        q: "Are page breaks kept?",
+        a: "Yes. Each page is separated by a marker so you can tell which page a passage came from, which matters when you are quoting or referencing the document.",
+      },
+      {
+        q: "Will the layout be preserved?",
+        a: "Text is extracted in reading order line by line. Columns and tables are flattened into lines; if you need table structure, use PDF to Excel instead.",
       },
     ],
   },

@@ -35,6 +35,14 @@ const PATHS: Record<IconKey, React.ReactNode> = {
       <path d="m9 12 1.3 5L12 13l1.7 4L15 12" />
     </>
   ),
+  text: (
+    <>
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+      <path d="M14 3v5h5" />
+      <path d="M9 13h6" />
+      <path d="M9 17h4" />
+    </>
+  ),
   excel: (
     <>
       <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
