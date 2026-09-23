@@ -114,3 +114,95 @@ export function toolErrorFromCode(code: string, detail?: string): ToolError {
   const known = code in COPY ? (code as ToolErrorCode) : "UNKNOWN";
   return new ToolError(known, detail);
 }
+
+export interface RecoveryAction {
+  /** Button text. Names the destination, so the user knows before clicking. */
+  label: string;
+  /** Path to a tool that can plausibly succeed where this one failed. */
+  href: string;
+  /** One line on why this is being offered. */
+  reason: string;
+}
+
+/**
+ * Where to send someone whose file this tool cannot handle.
+ *
+ * The error copy already explains what went wrong, which leaves the user
+ * informed and stuck — they close the tab. A scanned PDF on /pdf-to-word is
+ * the clearest case: nothing about that document will ever convert to text,
+ * but the same pages rasterise to images perfectly.
+ *
+ * Returns null when no other tool would genuinely do better. That is the
+ * important half. A suggestion that cannot work costs the user another upload
+ * to discover, and teaches them to ignore the ones that would have helped.
+ */
+export function recoveryAction(
+  code: ToolErrorCode,
+  tool: { slug: string },
+): RecoveryAction | null {
+  const notCurrentTool = (candidate: RecoveryAction): RecoveryAction | null =>
+    // Suggesting the page the user is already stuck on reads as a broken site.
+    candidate.href === `/${tool.slug}` ? null : candidate;
+
+  switch (code) {
+    case "NO_TEXT_CONTENT":
+      // No text layer exists. Every text-extraction tool fails identically,
+      // so the only honest suggestion is one that treats pages as pictures.
+      return notCurrentTool({
+        label: "Convert pages to images instead",
+        href: "/pdf-to-jpg",
+        reason: "Scanned pages are pictures, so they can still be saved as images.",
+      });
+
+    case "FILE_TOO_LARGE":
+      // Two ways out: make it smaller, or work on part of it. Offer whichever
+      // the user is not already on.
+      return (
+        notCurrentTool({
+          label: "Split it into smaller files",
+          href: "/split-pdf",
+          reason: "Working on part of the document keeps each file under the limit.",
+        }) ??
+        notCurrentTool({
+          label: "Compress it first",
+          href: "/compress-pdf",
+          reason: "A smaller file will fit within the limit.",
+        })
+      );
+
+    case "TOO_MANY_FILES":
+      return notCurrentTool({
+        label: "Merge them into one PDF first",
+        href: "/merge-pdf",
+        reason: "One combined file avoids the per-run limit.",
+      });
+
+    case "UNSUPPORTED_FILE":
+      return notCurrentTool({
+        label: "Turn an image into a PDF",
+        href: "/image-to-pdf",
+        reason: "If you have a photo or screenshot, this converts it to a PDF first.",
+      });
+
+    case "CORRUPT_FILE":
+    case "UNKNOWN":
+      // Neither code identifies a cause, so anything specific would be a
+      // guess. Compression rewrites the file structure, which does repair
+      // some malformed documents — offered as a maybe, worded as one.
+      return notCurrentTool({
+        label: "Try rewriting it with Compress",
+        href: "/compress-pdf",
+        reason: "Rebuilding the file sometimes fixes a document that will not open.",
+      });
+
+    // Deliberately no action. These are resolved on this page, by this user,
+    // and a link away from it would be a distraction rather than help.
+    case "PASSWORD_REQUIRED":
+    case "WRONG_PASSWORD":
+    case "EMPTY_SELECTION":
+    case "NO_FILES":
+    case "NETWORK_ERROR":
+    case "CANCELLED":
+      return null;
+  }
+}

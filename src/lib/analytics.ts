@@ -24,7 +24,12 @@ export type AnalyticsEvent =
    * nothing, which words the keyword lists are still missing.
    */
   | "tool_search_selected"
-  | "tool_search_no_results";
+  | "tool_search_no_results"
+  /**
+   * Whether the suggestion offered after a failure is one people actually
+   * take — the difference between a useful escape route and decoration.
+   */
+  | "error_recovery_clicked";
 
 export interface AnalyticsProperties {
   tool?: string;

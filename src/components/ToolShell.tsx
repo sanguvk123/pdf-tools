@@ -279,7 +279,11 @@ export function ToolShell({
         )}
 
         {state.status === "ERROR" && state.error && (
-          <ErrorState error={state.error} onRetry={runner.reset} />
+          <ErrorState
+            error={state.error}
+            onRetry={runner.reset}
+            toolSlug={tool.slug}
+          />
         )}
       </div>
     </div>

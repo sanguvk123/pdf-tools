@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/Button";
+import { track } from "@/lib/analytics";
 import { formatBytes, reductionPercent } from "@/lib/format";
 import type { ToolProgress, ToolResult } from "@/lib/types";
-import type { ErrorCopy } from "@/lib/errors";
+import { recoveryAction, type ErrorCopy, type ToolErrorCode } from "@/lib/errors";
 
 /* ---------------- Processing ---------------- */
 
@@ -182,11 +184,15 @@ export function SuccessState({
 /* ---------------- Error ---------------- */
 
 interface ErrorStateProps {
-  error: ErrorCopy;
+  error: ErrorCopy & { code: ToolErrorCode };
   onRetry: () => void;
+  /** The tool that failed, so a suggestion never points back at itself. */
+  toolSlug: string;
 }
 
-export function ErrorState({ error, onRetry }: ErrorStateProps) {
+export function ErrorState({ error, onRetry, toolSlug }: ErrorStateProps) {
+  const action = recoveryAction(error.code, { slug: toolSlug });
+
   return (
     <div
       role="alert"
@@ -219,6 +225,30 @@ export function ErrorState({ error, onRetry }: ErrorStateProps) {
           Try another file
         </Button>
       </div>
+
+      {/* An accurate explanation still leaves the user stuck. Where another
+          tool can genuinely succeed with the same file — a scan that will
+          never convert to text but rasterises fine — offer it here rather
+          than making them work out the alternative themselves. */}
+      {action && (
+        <div className="mt-5 border-t border-line pt-5">
+          <p className="mx-auto max-w-[42ch] text-[12.5px] text-muted">
+            {action.reason}
+          </p>
+          <Link
+            href={action.href}
+            onClick={() =>
+              track("error_recovery_clicked", {
+                code: error.code,
+                to: action.href,
+              })
+            }
+            className="mt-2.5 inline-block text-[13.5px] font-medium text-accent transition-colors duration-150 hover:text-accent-hover"
+          >
+            {action.label} →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
