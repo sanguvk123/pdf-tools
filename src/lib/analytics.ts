@@ -56,6 +56,56 @@ export function sizeBucketKb(bytes: number): number {
   return Math.round(bytes / 1000 / 100) * 100;
 }
 
+/**
+ * Where events are sent.
+ *
+ * Deliberately a direct POST rather than the @vercel/analytics package: that
+ * package depends on a Svelte Vite plugin requiring vite 8, while vitest 2
+ * pins vite 5. Installing it means --legacy-peer-deps and a test runner on an
+ * unsupported dependency tree — a bad trade for a wrapper around one endpoint.
+ *
+ * The route is relative, so it works on the production domain and on preview
+ * deployments without configuration.
+ */
+const ENDPOINT = "/_vercel/insights/event";
+
+/**
+ * Only ever contains data we chose to send. File names, page contents and
+ * anything derived from a document are never passed in — sizes arrive
+ * pre-bucketed via sizeBucketKb, and a query string is the user's own words
+ * about a tool, not about their file.
+ */
+function send(entry: QueuedEvent): void {
+  const body = JSON.stringify({
+    name: entry.event,
+    // The endpoint expects the page this happened on.
+    url: window.location.href,
+    data: Object.fromEntries(
+      Object.entries(entry).filter(
+        ([key, value]) =>
+          key !== "event" && key !== "timestamp" && value !== undefined,
+      ),
+    ),
+  });
+
+  // sendBeacon survives the page being closed, which matters because
+  // download_clicked is frequently the last thing that happens before the
+  // user leaves. A fetch there is routinely cancelled mid-flight.
+  if (navigator.sendBeacon?.(ENDPOINT, new Blob([body], { type: "application/json" }))) {
+    return;
+  }
+
+  // keepalive gives fetch the same survive-unload behaviour where beacon is
+  // unavailable or refused. Failures are swallowed: analytics must never
+  // surface an error to someone trying to compress a PDF.
+  void fetch(ENDPOINT, {
+    method: "POST",
+    body,
+    headers: { "Content-Type": "application/json" },
+    keepalive: true,
+  }).catch(() => {});
+}
+
 export function track(event: AnalyticsEvent, properties: AnalyticsProperties = {}): void {
   if (typeof window === "undefined") return;
 
@@ -64,14 +114,19 @@ export function track(event: AnalyticsEvent, properties: AnalyticsProperties = {
   queue.push(entry);
   if (queue.length > MAX_QUEUE) queue.shift();
 
-  // Hook for a real provider. Until one is configured this is a no-op in
-  // production and a useful trace in development.
   if (process.env.NODE_ENV === "development") {
     console.debug("[analytics]", entry.event, properties);
+    return;
+  }
+
+  try {
+    send(entry);
+  } catch {
+    // An analytics failure is never worth breaking a tool over.
   }
 }
 
-/** Exposed for a future transport to flush on pagehide. */
+/** Recent events, newest last. Kept for debugging; not a transport. */
 export function drainEvents(): QueuedEvent[] {
   return queue.splice(0, queue.length);
 }
