@@ -32,6 +32,15 @@ interface ToolShellProps {
   showSizeDelta?: boolean;
   /** Blocks the primary action, e.g. when no pages are selected yet. */
   actionDisabled?: boolean;
+  /**
+   * Set to false when a wrapping landing page supplies its own <h1>.
+   *
+   * A page must have exactly one h1 so it is unambiguous which query it
+   * answers. Rendering a second one and hiding it with sr-only would not
+   * help: that hides it visually but leaves it in the DOM, where crawlers
+   * and screen readers still find it.
+   */
+  showHeading?: boolean;
 }
 
 /** Wraps a single output Blob as a File, ready to feed into the next tool. */
@@ -53,6 +62,7 @@ export function ToolShell({
   options,
   showSizeDelta = false,
   actionDisabled = false,
+  showHeading = true,
 }: ToolShellProps) {
   const { state } = runner;
 
@@ -98,15 +108,23 @@ export function ToolShell({
   }
 
   return (
-    <div className="mx-auto max-w-xl px-5 pt-10 pb-8 sm:pt-16">
-      <header className="text-center">
-        <h1 className="text-[27px] leading-tight font-semibold tracking-[-0.03em] sm:text-[32px]">
-          {tool.heading}
-        </h1>
-        <p className="mx-auto mt-2 max-w-[42ch] text-[14.5px] text-muted">
-          {tool.subtitle}
-        </p>
-      </header>
+    <div
+      className={
+        showHeading
+          ? "mx-auto max-w-xl px-5 pt-10 pb-8 sm:pt-16"
+          : "mx-auto max-w-xl px-5 pb-8"
+      }
+    >
+      {showHeading && (
+        <header className="text-center">
+          <h1 className="text-[27px] leading-tight font-semibold tracking-[-0.03em] sm:text-[32px]">
+            {tool.heading}
+          </h1>
+          <p className="mx-auto mt-2 max-w-[42ch] text-[14.5px] text-muted">
+            {tool.subtitle}
+          </p>
+        </header>
+      )}
 
       <div className="mt-8">
         {/* IDLE — the upload zone is the visual focus. */}

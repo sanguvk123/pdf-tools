@@ -16,7 +16,14 @@ const TOOL = requireTool("compress-pdf");
  * the user arrived knowing exactly what they need. We state plainly whether
  * the result met the goal rather than implying a guarantee we cannot make.
  */
-export function TargetCompressTool({ target }: { target: CompressTarget }) {
+export function TargetCompressTool({
+  target,
+  showHeading = true,
+}: {
+  target: CompressTarget;
+  /** False when the landing page supplies the page's single <h1>. */
+  showHeading?: boolean;
+}) {
   const loadEngine = useCallback(async () => {
     const { createClientEngine } = await import("@/lib/clientEngine");
     return createClientEngine("compress");
@@ -33,7 +40,12 @@ export function TargetCompressTool({ target }: { target: CompressTarget }) {
 
   return (
     <>
-      <ToolShell tool={TOOL} runner={runner} showSizeDelta />
+      <ToolShell
+        tool={TOOL}
+        runner={runner}
+        showSizeDelta
+        showHeading={showHeading}
+      />
 
       {result && (
         <div className="mx-auto -mt-2 max-w-xl px-5">

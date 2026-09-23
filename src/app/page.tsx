@@ -1,6 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ToolCard } from "@/components/ToolCard";
 import { FEATURED_TOOLS } from "@/lib/tools";
+
+/**
+ * Title and description are inherited from the root layout; only the
+ * canonical is declared here. Without it the homepage is the one page on the
+ * site with no canonical, which leaves "/" and any tracking-parameter
+ * variant of it looking like separate pages to a crawler.
+ */
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 /**
  * Homepage. Fully static and free of processing code — the heavy PDF

@@ -72,11 +72,9 @@ export function CompressTargetPage({ target }: { target: CompressTarget }) {
         </p>
       </div>
 
-      {/* The tool renders its own heading, which this page replaces, so it is
-          hidden visually while remaining available to screen readers. */}
-      <div className="[&>div>header]:sr-only">
-        <TargetCompressTool target={target} />
-      </div>
+      {/* This page owns the <h1> above, so the tool omits its own heading
+          rather than rendering a second one. */}
+      <TargetCompressTool target={target} showHeading={false} />
 
       <div className="mx-auto max-w-xl px-5 pb-10">
         <section className="mt-14">

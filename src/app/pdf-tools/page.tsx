@@ -8,8 +8,10 @@ import {
 
 export const metadata: Metadata = {
   title: "All PDF tools",
+  // Lists only tools that exist: promising "protect" in a search snippet and
+  // not offering it is the kind of mismatch that produces an instant bounce.
   description:
-    "Every PDF, image and conversion tool in one place. Merge, compress, split, rotate, protect and convert files in seconds — free and without signup.",
+    "Every PDF tool in one place. Compress, convert, merge, split, rotate and reorder files in seconds — free, no signup, no watermarks.",
   alternates: { canonical: "/pdf-tools" },
 };
 

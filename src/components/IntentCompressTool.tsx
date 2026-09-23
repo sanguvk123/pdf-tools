@@ -15,7 +15,14 @@ const TOOL = requireTool("compress-pdf");
  * again would undo the reason the visitor landed here instead of on the
  * general Compress PDF page.
  */
-export function IntentCompressTool({ level }: { level: CompressionLevel }) {
+export function IntentCompressTool({
+  level,
+  showHeading = true,
+}: {
+  level: CompressionLevel;
+  /** False when the landing page supplies the page's single <h1>. */
+  showHeading?: boolean;
+}) {
   const loadEngine = useCallback(async () => {
     const { createClientEngine } = await import("@/lib/clientEngine");
     return createClientEngine("compress");
@@ -27,5 +34,12 @@ export function IntentCompressTool({ level }: { level: CompressionLevel }) {
     loadEngine,
   });
 
-  return <ToolShell tool={TOOL} runner={runner} showSizeDelta />;
+  return (
+    <ToolShell
+      tool={TOOL}
+      runner={runner}
+      showSizeDelta
+      showHeading={showHeading}
+    />
+  );
 }
