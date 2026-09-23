@@ -6,6 +6,7 @@ import {
   extractPages,
   mergePdfs,
   readPageCount,
+  reorderPdf,
   rotatePdf,
   splitPdf,
   type OperationContext,
@@ -33,6 +34,29 @@ function makeContext(overrides: Partial<OperationContext> = {}): OperationContex
     throwIfCancelled: () => {},
     ...overrides,
   };
+}
+
+/**
+ * Builds a PDF whose pages have distinct widths, so a page can be identified
+ * by its size after being moved. Page N is (100 + N) points wide.
+ */
+async function makeTaggedPdf(pageCount: number): Promise<File> {
+  const document = await PDFDocument.create();
+  for (let index = 1; index <= pageCount; index++) {
+    document.addPage([100 + index, 842]);
+  }
+  const bytes = await document.save();
+  return new File([bytes as BlobPart], "tagged.pdf", {
+    type: "application/pdf",
+  });
+}
+
+/** Recovers the original page numbers from a tagged document, in order. */
+async function pageTagsOf(blob: Blob): Promise<number[]> {
+  const document = await PDFDocument.load(await blob.arrayBuffer());
+  return document
+    .getPages()
+    .map((page) => Math.round(page.getWidth()) - 100);
 }
 
 describe("mergePdfs", () => {
@@ -256,6 +280,77 @@ describe("readPageCount", () => {
 
     await expect(readPageCount(broken)).rejects.toMatchObject({
       code: "CORRUPT_FILE",
+    });
+  });
+});
+
+describe("reorderPdf", () => {
+  it("places pages in the requested order", async () => {
+    const file = await makeTaggedPdf(4);
+
+    const result = await reorderPdf(file, [3, 1, 4, 2], makeContext());
+
+    expect(await pageTagsOf(result.outputs[0].blob)).toEqual([3, 1, 4, 2]);
+  });
+
+  it("keeps every page, so nothing is silently lost", async () => {
+    const file = await makeTaggedPdf(5);
+
+    const result = await reorderPdf(file, [5, 4, 3, 2, 1], makeContext());
+
+    expect(await pageCountOf(result.outputs[0].blob)).toBe(5);
+  });
+
+  it("names the output so the original is not overwritten", async () => {
+    const file = await makeTaggedPdf(2);
+
+    const result = await reorderPdf(file, [2, 1], makeContext());
+
+    expect(result.outputs[0].filename).toBe("tagged-reordered.pdf");
+  });
+
+  it("rejects an order that duplicates a page", async () => {
+    const file = await makeTaggedPdf(3);
+
+    await expect(
+      reorderPdf(file, [1, 2, 2], makeContext()),
+    ).rejects.toBeInstanceOf(ToolError);
+  });
+
+  it("rejects an order that drops a page", async () => {
+    const file = await makeTaggedPdf(3);
+
+    await expect(reorderPdf(file, [2, 1], makeContext())).rejects.toBeInstanceOf(
+      ToolError,
+    );
+  });
+
+  it("rejects a page number outside the document", async () => {
+    const file = await makeTaggedPdf(3);
+
+    await expect(
+      reorderPdf(file, [1, 2, 9], makeContext()),
+    ).rejects.toBeInstanceOf(ToolError);
+  });
+
+  it("refuses an unchanged order rather than returning an identical file", async () => {
+    const file = await makeTaggedPdf(3);
+
+    await expect(
+      reorderPdf(file, [1, 2, 3], makeContext()),
+    ).rejects.toBeInstanceOf(ToolError);
+  });
+
+  it("stops when the user cancels", async () => {
+    const file = await makeTaggedPdf(3);
+    const context = makeContext({
+      throwIfCancelled: () => {
+        throw new ToolError("CANCELLED");
+      },
+    });
+
+    await expect(reorderPdf(file, [3, 2, 1], context)).rejects.toMatchObject({
+      code: "CANCELLED",
     });
   });
 });

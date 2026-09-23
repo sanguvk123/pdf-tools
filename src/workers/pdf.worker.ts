@@ -6,6 +6,7 @@ import {
   deletePages,
   extractPages,
   mergePdfs,
+  reorderPdf,
   rotatePdf,
   splitPdf,
   type CompressionLevel,
@@ -65,6 +66,9 @@ async function execute(
 
     case "delete-pages":
       return deletePages(files[0], (options.pages as number[]) ?? [], context);
+
+    case "reorder":
+      return reorderPdf(files[0], (options.order as number[]) ?? [], context);
 
     case "rotate":
       return rotatePdf(

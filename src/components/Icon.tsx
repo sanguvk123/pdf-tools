@@ -28,6 +28,16 @@ const PATHS: Record<IconKey, React.ReactNode> = {
       <rect x="15" y="5" width="6" height="14" rx="1.5" />
     </>
   ),
+  reorder: (
+    <>
+      <rect x="3" y="4" width="7" height="16" rx="1.5" />
+      <rect x="14" y="4" width="7" height="16" rx="1.5" />
+      <path d="M10.5 9 13.5 9" />
+      <path d="m12.5 7.5 1.5 1.5-1.5 1.5" />
+      <path d="M13.5 15h-3" />
+      <path d="M11.5 13.5 10 15l1.5 1.5" />
+    </>
+  ),
   word: (
     <>
       <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />

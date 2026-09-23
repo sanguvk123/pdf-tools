@@ -23,6 +23,7 @@ export type IconKey =
   | "rotate"
   | "trash"
   | "extract"
+  | "reorder"
   | "lock";
 
 export interface FaqItem {
@@ -542,7 +543,42 @@ export const TOOLS: Tool[] = [
       },
       {
         q: "Can I keep the pages in a different order?",
-        a: "Pages are saved in document order. To reorder, extract them and then merge the results in the order you want.",
+        a: "Pages are saved in document order here. If you want a different sequence, the Reorder PDF pages tool lets you drag pages into any order you like.",
+      },
+    ],
+  },
+  {
+    slug: "reorder-pdf-pages",
+    name: "Reorder pages",
+    tagline: "Rearrange page order",
+    heading: "Reorder PDF pages",
+    subtitle: "Drag your pages into the order you want.",
+    metaTitle: "Reorder PDF Pages Online — rearrange pages, free",
+    metaDescription:
+      "Rearrange the pages of a PDF by dragging them into order. See every page, move any of them, and download. Free and processed on your device.",
+    category: "pdf",
+    icon: "reorder",
+    engine: "client",
+    accept: "application/pdf,.pdf",
+    acceptLabel: "PDF",
+    multiple: false,
+    maxFileSizeMb: 100,
+    action: "Save new order",
+    actionProgressive: "Rebuilding your document",
+    successHeadline: "Pages reordered",
+    featured: false,
+    faq: [
+      {
+        q: "Will reordering reduce the quality?",
+        a: "No. Pages are copied across exactly as they are, with no re-encoding, so the result is visually identical to the original.",
+      },
+      {
+        q: "Can I reorder without a mouse?",
+        a: "Yes. Every page has move-left and move-right buttons that work with the keyboard, so dragging is never the only way to do it.",
+      },
+      {
+        q: "Can I remove pages at the same time?",
+        a: "Reordering keeps every page. To take pages out, use the Delete pages tool, which is built for exactly that.",
       },
     ],
   },

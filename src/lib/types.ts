@@ -61,7 +61,7 @@ export type ClientOperation =
   | "rotate"
   | "delete-pages"
   | "extract-pages"
-  | "protect"
+  | "reorder"
   | "pdf-to-image"
   | "images-to-pdf";
 

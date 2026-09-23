@@ -186,6 +186,72 @@ export async function deletePages(
   };
 }
 
+/* ---------------- Reorder ---------------- */
+
+/**
+ * Rebuilds the document with its pages in a new order.
+ *
+ * `order` is a list of 1-based source page numbers in their desired final
+ * sequence, so it doubles as a permutation and as a filter — though the UI
+ * only ever reorders, never drops. Validated strictly because a malformed
+ * order would silently produce a document with missing or duplicated pages,
+ * which the user might not notice until much later.
+ */
+export async function reorderPdf(
+  file: File,
+  order: number[],
+  context: OperationContext,
+): Promise<OperationResult> {
+  const source = await loadPdf(file);
+  const pageCount = source.getPageCount();
+
+  if (order.length !== pageCount) {
+    throw new ToolError("EMPTY_SELECTION", "Every page must appear exactly once.");
+  }
+
+  const seen = new Set<number>();
+  for (const page of order) {
+    if (!Number.isInteger(page) || page < 1 || page > pageCount) {
+      throw new ToolError("EMPTY_SELECTION", "That page order is not valid.");
+    }
+    if (seen.has(page)) {
+      throw new ToolError("EMPTY_SELECTION", "Every page must appear exactly once.");
+    }
+    seen.add(page);
+  }
+
+  // Reordering to the existing sequence would hand back an identical file
+  // while implying work was done.
+  const unchanged = order.every((page, index) => page === index + 1);
+  if (unchanged) {
+    throw new ToolError(
+      "EMPTY_SELECTION",
+      "The pages are already in this order. Drag a page to move it.",
+    );
+  }
+
+  context.throwIfCancelled();
+  context.report({ stage: "Rebuilding your document" });
+
+  const output = await PDFDocument.create();
+  const copied = await output.copyPages(
+    source,
+    order.map((page) => page - 1),
+  );
+  for (const page of copied) output.addPage(page);
+
+  context.report({ stage: "Saving", ratio: 1 });
+
+  return {
+    outputs: [
+      {
+        filename: outputName(file.name, "reordered", "pdf"),
+        blob: toBlob(await output.save()),
+      },
+    ],
+  };
+}
+
 /* ---------------- Rotate ---------------- */
 
 export async function rotatePdf(
