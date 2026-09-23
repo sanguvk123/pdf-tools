@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { ToolCard } from "@/components/ToolCard";
-import { CATEGORY_LABELS, toolsInCategory, type ToolCategory } from "@/lib/tools";
+import {
+  CATEGORY_LABELS,
+  CATEGORY_ORDER,
+  toolsInCategory,
+} from "@/lib/tools";
 
 export const metadata: Metadata = {
   title: "All PDF tools",
@@ -9,7 +13,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/pdf-tools" },
 };
 
-const CATEGORIES: ToolCategory[] = ["pdf", "image", "convert"];
 
 export default function AllToolsPage() {
   return (
@@ -23,7 +26,7 @@ export default function AllToolsPage() {
         </p>
       </header>
 
-      {CATEGORIES.map((category) => (
+      {CATEGORY_ORDER.map((category) => (
         <section key={category} className="pb-10" aria-labelledby={category}>
           <h2
             id={category}

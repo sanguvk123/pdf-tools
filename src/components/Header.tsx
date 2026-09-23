@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { CATEGORY_LABELS, toolsInCategory, type ToolCategory } from "@/lib/tools";
+import {
+  CATEGORY_LABELS,
+  CATEGORY_ORDER,
+  toolsInCategory,
+  type ToolCategory,
+} from "@/lib/tools";
 
-const CATEGORIES: ToolCategory[] = ["pdf", "image", "convert"];
 
 /**
  * Minimal persistent navigation. Rendered in the root layout so it stays
@@ -55,7 +59,7 @@ export function Header() {
           aria-label="Tools"
           className="relative hidden items-center gap-1 md:flex"
         >
-          {CATEGORIES.map((category) => (
+          {CATEGORY_ORDER.map((category) => (
             <div key={category}>
               <button
                 type="button"
@@ -135,7 +139,7 @@ export function Header() {
           id="mobile-nav"
           className="animate-rise border-t border-line bg-surface px-5 py-3 md:hidden"
         >
-          {CATEGORIES.map((category) => (
+          {CATEGORY_ORDER.map((category) => (
             <div key={category} className="py-2">
               <p className="px-1 pb-1 text-[11px] font-semibold tracking-wide text-faint uppercase">
                 {CATEGORY_LABELS[category]}

@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { CATEGORY_LABELS, toolsInCategory, type ToolCategory } from "@/lib/tools";
+import {
+  CATEGORY_LABELS,
+  CATEGORY_ORDER,
+  toolsInCategory,
+} from "@/lib/tools";
 
-const CATEGORIES: ToolCategory[] = ["pdf", "image", "convert"];
 
 /**
  * Server-rendered footer. Links every tool from every page, which gives the
@@ -26,7 +29,7 @@ export function Footer() {
           </p>
         </div>
 
-        {CATEGORIES.map((category) => (
+        {CATEGORY_ORDER.map((category) => (
           <nav key={category} aria-label={CATEGORY_LABELS[category]}>
             <p className="text-[11px] font-semibold tracking-wide text-faint uppercase">
               {CATEGORY_LABELS[category]}

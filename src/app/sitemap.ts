@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { TOOLS } from "@/lib/tools";
+import { COMPRESS_INTENTS } from "@/lib/compressIntents";
 import { COMPRESS_TARGETS } from "@/lib/compressTargets";
 
 const BASE_URL = "https://pdfutility.app";
@@ -33,6 +34,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
     ...COMPRESS_TARGETS.map((target) => ({
       url: `${BASE_URL}/compress-pdf-to-${target.slug}`,
+      lastModified,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
+    ...COMPRESS_INTENTS.map((intent) => ({
+      url: `${BASE_URL}/${intent.slug}`,
       lastModified,
       changeFrequency: "monthly" as const,
       priority: 0.6,

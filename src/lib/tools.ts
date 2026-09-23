@@ -6,7 +6,14 @@
  * here wires it into navigation and SEO; the page itself supplies the engine.
  */
 
-export type ToolCategory = "pdf" | "image" | "convert";
+/**
+ * Grouped by the job to be done, not by file format.
+ *
+ * People arrive thinking "I need to make this smaller" or "I need these in one
+ * file", so the navigation mirrors those intents. A format-based split (PDF
+ * tools / image tools) would scatter one intent across several menus.
+ */
+export type ToolCategory = "compress" | "convert" | "organize" | "edit";
 
 /** Where the work happens. The UI never exposes this to the user. */
 export type ToolEngine = "client" | "server";
@@ -78,7 +85,7 @@ export const TOOLS: Tool[] = [
     metaTitle: "Merge PDF — Combine PDF files online, free",
     metaDescription:
       "Combine multiple PDF files into a single document in seconds. Drag to reorder pages, no signup, and your files never leave your device.",
-    category: "pdf",
+    category: "organize",
     icon: "merge",
     engine: "client",
     accept: "application/pdf,.pdf",
@@ -113,7 +120,7 @@ export const TOOLS: Tool[] = [
     metaTitle: "Compress PDF — Reduce PDF file size online, free",
     metaDescription:
       "Make your PDF smaller in seconds. Pick recommended, smaller or smallest, and download a lighter file. No signup, processed on your device.",
-    category: "pdf",
+    category: "compress",
     icon: "compress",
     engine: "client",
     accept: "application/pdf,.pdf",
@@ -148,7 +155,7 @@ export const TOOLS: Tool[] = [
     metaTitle: "Split PDF — Extract pages from a PDF online, free",
     metaDescription:
       "Split a PDF into separate files or pull out just the pages you need. Pick pages visually, no signup, processed on your device.",
-    category: "pdf",
+    category: "organize",
     icon: "split",
     engine: "client",
     accept: "application/pdf,.pdf",
@@ -218,7 +225,7 @@ export const TOOLS: Tool[] = [
     metaTitle: "PDF to JPG — Convert PDF pages to images online, free",
     metaDescription:
       "Convert each page of your PDF into a sharp JPG image. Download a single page or all pages as a ZIP. No signup, runs on your device.",
-    category: "image",
+    category: "convert",
     icon: "image",
     engine: "client",
     accept: "application/pdf,.pdf",
@@ -253,7 +260,7 @@ export const TOOLS: Tool[] = [
     metaTitle: "PDF to PNG — Convert PDF pages to PNG online, free",
     metaDescription:
       "Convert PDF pages into high-quality PNG images. Lossless output keeps text and line art crisp. No signup, runs entirely on your device.",
-    category: "image",
+    category: "convert",
     icon: "image",
     engine: "client",
     accept: "application/pdf,.pdf",
@@ -288,7 +295,7 @@ export const TOOLS: Tool[] = [
     metaTitle: "JPG to PDF — Convert images to PDF online, free",
     metaDescription:
       "Combine JPG and PNG images into one clean PDF. Drag to reorder, choose page size, no signup and nothing leaves your device.",
-    category: "image",
+    category: "convert",
     icon: "pdf",
     engine: "client",
     accept: "image/jpeg,image/png,.jpg,.jpeg,.png",
@@ -323,7 +330,7 @@ export const TOOLS: Tool[] = [
     metaTitle: "PNG to PDF — Convert PNG images to PDF online, free",
     metaDescription:
       "Combine PNG images into one PDF. Drag to reorder, pick a page size, and download. No signup, and nothing leaves your device.",
-    category: "image",
+    category: "convert",
     icon: "pdf",
     engine: "client",
     accept: "image/png,.png",
@@ -428,7 +435,7 @@ export const TOOLS: Tool[] = [
     metaTitle: "Image to PDF — Convert PNG, JPG, WebP and GIF to PDF",
     metaDescription:
       "Convert PNG, JPG, WebP, GIF and BMP images into one PDF. Reorder pages, pick page size, and keep everything on your device.",
-    category: "image",
+    category: "convert",
     icon: "pdf",
     engine: "client",
     accept: "image/*",
@@ -463,7 +470,7 @@ export const TOOLS: Tool[] = [
     metaTitle: "Rotate PDF — Turn PDF pages online, free",
     metaDescription:
       "Rotate every page or just the ones that are sideways, then save the corrected PDF. No signup, runs entirely on your device.",
-    category: "pdf",
+    category: "edit",
     icon: "rotate",
     engine: "client",
     accept: "application/pdf,.pdf",
@@ -494,7 +501,7 @@ export const TOOLS: Tool[] = [
     metaTitle: "Delete PDF pages — Remove pages from a PDF online, free",
     metaDescription:
       "Remove unwanted pages from a PDF and download the tidied document. Pick pages visually, no signup, processed on your device.",
-    category: "pdf",
+    category: "edit",
     icon: "trash",
     engine: "client",
     accept: "application/pdf,.pdf",
@@ -525,7 +532,7 @@ export const TOOLS: Tool[] = [
     metaTitle: "Extract PDF pages — Save selected pages as a new PDF",
     metaDescription:
       "Pick the pages you want and save them as a new PDF. Keeps original quality, no signup, runs entirely in your browser.",
-    category: "pdf",
+    category: "organize",
     icon: "extract",
     engine: "client",
     accept: "application/pdf,.pdf",
@@ -556,7 +563,7 @@ export const TOOLS: Tool[] = [
     metaTitle: "Reorder PDF Pages Online — rearrange pages, free",
     metaDescription:
       "Rearrange the pages of a PDF by dragging them into order. See every page, move any of them, and download. Free and processed on your device.",
-    category: "pdf",
+    category: "organize",
     icon: "reorder",
     engine: "client",
     accept: "application/pdf,.pdf",
@@ -603,10 +610,19 @@ export function requireTool(slug: string): Tool {
 export const FEATURED_TOOLS = TOOLS.filter((tool) => tool.featured);
 
 export const CATEGORY_LABELS: Record<ToolCategory, string> = {
-  pdf: "PDF Tools",
-  image: "Image Tools",
-  convert: "Converters",
+  compress: "Compress",
+  convert: "Convert",
+  organize: "Organize",
+  edit: "Edit",
 };
+
+/** Display order, most-searched intent first. */
+export const CATEGORY_ORDER: ToolCategory[] = [
+  "compress",
+  "convert",
+  "organize",
+  "edit",
+];
 
 export function toolsInCategory(category: ToolCategory): Tool[] {
   return TOOLS.filter((tool) => tool.category === category);
