@@ -51,6 +51,54 @@ function fileFromOutput(result: { outputs: { filename: string; blob: Blob }[] })
 }
 
 /**
+ * States, in plain language, where the file actually goes.
+ *
+ * Previously every tool showed the same "Private · Secure · No signup" line,
+ * including the conversions that upload to our server. The disclosure existed
+ * further down the page, but the reassuring badge sat right beside the upload
+ * button — so the prominent claim and the accurate one disagreed. Reading the
+ * engine from the registry means the badge cannot drift from the truth when a
+ * tool changes where it runs.
+ */
+function PrivacyNote({ engine }: { engine: Tool["engine"] }) {
+  const local = engine === "client";
+
+  return (
+    <p
+      className={[
+        "mt-4 flex items-center justify-center gap-1.5 text-center text-[12.5px]",
+        local ? "text-success" : "text-muted",
+      ].join(" ")}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        className="h-3.5 w-3.5 shrink-0"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="4" y="10" width="16" height="10" rx="2" />
+        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+      </svg>
+      {local ? (
+        <span>
+          <strong className="font-medium">Stays on your device.</strong> This
+          tool runs in your browser — nothing is uploaded.
+        </span>
+      ) : (
+        <span>
+          <strong className="font-medium">Uploaded securely.</strong> This
+          conversion needs a server; your file is deleted straight after.
+        </span>
+      )}
+    </p>
+  );
+}
+
+/**
  * The universal tool layout.
  *
  * Renders exactly one state at a time, so the user is never looking at a dead
@@ -139,9 +187,7 @@ export function ToolShell({
         {!hasFiles && state.status !== "ERROR" && (
           <>
             <UploadDropzone tool={tool} onFiles={runner.selectFiles} />
-            <p className="mt-4 text-center text-[12.5px] text-faint">
-              Private · Secure · No signup
-            </p>
+            <PrivacyNote engine={tool.engine} />
           </>
         )}
 

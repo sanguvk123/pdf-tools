@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ToolCard } from "@/components/ToolCard";
-import { FEATURED_TOOLS } from "@/lib/tools";
+import { FEATURED_TOOLS, TOOLS } from "@/lib/tools";
+
+/**
+ * Counted from the registry rather than written as prose, so the privacy
+ * claim on the homepage cannot drift out of date when a tool moves between
+ * the browser and the server.
+ */
+const CLIENT_TOOL_COUNT = TOOLS.filter(
+  (tool) => tool.engine === "client",
+).length;
 
 /**
  * Title and description are inherited from the root layout; only the
@@ -35,7 +44,7 @@ export default function HomePage() {
         </p>
 
         <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-[12.5px] text-muted">
-          {["Runs in your browser", "No signup", "No watermarks"].map(
+          {[`${CLIENT_TOOL_COUNT} of ${TOOLS.length} tools run in your browser`, "No signup", "No watermarks"].map(
             (claim) => (
               <li key={claim} className="flex items-center gap-1.5">
                 <span
@@ -82,7 +91,7 @@ export default function HomePage() {
             },
             {
               title: "Private",
-              body: "Your files stay on your device. When a tool does need a server, files are deleted right after processing.",
+              body: `${CLIENT_TOOL_COUNT} of the ${TOOLS.length} tools never upload anything. The ${TOOLS.length - CLIENT_TOOL_COUNT} conversions that need a server say so on the page, and delete your file straight after.`,
               tile: "bg-cat-organize-soft text-cat-organize",
               icon: "M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z",
             },

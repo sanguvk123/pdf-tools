@@ -247,6 +247,10 @@ export const TOOLS: Tool[] = [
         q: "Can it convert scanned pages?",
         a: "Scanned pages are images rather than text. Pages with no extractable text are reported so you know what came through.",
       },
+      {
+        q: "Does my file get uploaded?",
+        a: "Yes. Unlike most tools here, this conversion needs a server, so your PDF is uploaded over an encrypted connection, converted, and deleted immediately afterwards. It is never stored or looked at.",
+      },
     ],
   },
   {
@@ -422,6 +426,10 @@ export const TOOLS: Tool[] = [
         q: "Will the layout be preserved?",
         a: "Text is extracted in reading order line by line. Columns and tables are flattened into lines; if you need table structure, use PDF to Excel instead.",
       },
+      {
+        q: "Does my file get uploaded?",
+        a: "Yes. Unlike most tools here, extraction needs a server, so your PDF is uploaded over an encrypted connection, processed, and deleted immediately afterwards. It is never stored or looked at.",
+      },
     ],
   },
   {
@@ -456,6 +464,10 @@ export const TOOLS: Tool[] = [
       {
         q: "What if my PDF is a scan?",
         a: "A scanned page holds no table data, only pixels, so there is nothing to extract. Pages without usable text are reported back to you.",
+      },
+      {
+        q: "Does my file get uploaded?",
+        a: "Yes. Unlike most tools here, this conversion needs a server, so your PDF is uploaded over an encrypted connection, converted, and deleted immediately afterwards. It is never stored or looked at.",
       },
     ],
   },
