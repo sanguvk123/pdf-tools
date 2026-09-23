@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { ToolSearch } from "@/components/ToolSearch";
 import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
@@ -99,7 +100,13 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        {/* Sized to fit the header without crowding the nav; the dropdown it
+            opens is wider than the input itself. */}
+        <div className="ml-auto hidden w-56 lg:block xl:w-64">
+          <ToolSearch />
+        </div>
+
+        <div className="ml-auto flex items-center gap-2 lg:ml-3">
           <Link
             href="/compress-pdf"
             prefetch
@@ -139,6 +146,12 @@ export function Header() {
           id="mobile-nav"
           className="animate-rise border-t border-line bg-surface px-5 py-3 md:hidden"
         >
+          {/* First thing in the menu: on a phone, scanning four categories to
+              find one tool is slower than typing three letters. */}
+          <div className="pb-1">
+            <ToolSearch onNavigate={() => setMobileOpen(false)} />
+          </div>
+
           {CATEGORY_ORDER.map((category) => (
             <div key={category} className="py-2">
               <p className="px-1 pb-1 text-[11px] font-semibold tracking-wide text-faint uppercase">

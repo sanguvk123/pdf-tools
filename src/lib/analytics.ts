@@ -18,7 +18,13 @@ export type AnalyticsEvent =
   | "processing_cancelled"
   | "download_clicked"
   | "download_completed"
-  | "secondary_tool_clicked";
+  | "secondary_tool_clicked"
+  /**
+   * Which phrasings lead people to a tool — and, via the queries that return
+   * nothing, which words the keyword lists are still missing.
+   */
+  | "tool_search_selected"
+  | "tool_search_no_results";
 
 export interface AnalyticsProperties {
   tool?: string;
