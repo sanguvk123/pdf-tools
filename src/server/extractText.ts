@@ -1,4 +1,5 @@
 import "server-only";
+import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, sep } from "node:path";
 import { ToolError } from "@/lib/errors";
@@ -55,18 +56,48 @@ const COLUMN_GAP_POINTS = 8;
  * Resolving the real installed paths here makes the dependency explicit, so
  * the file tracer includes them in the deployment.
  */
-function pdfjsAssetPaths(): { workerSrc: string; standardFontDataUrl: string } {
-  const entry = createRequire(import.meta.url).resolve(
-    "pdfjs-dist/legacy/build/pdf.mjs",
-  );
-  const buildDir = dirname(entry);
-  const packageDir = dirname(dirname(buildDir));
+function pdfjsAssetPaths(): {
+  workerSrc: string;
+  standardFontDataUrl: string;
+} | null {
+  // The literal specifiers below are what makes the tracer include these files
+  // in the deployment bundle, so they must stay statically visible here.
+  const candidates = [
+    () =>
+      createRequire(import.meta.url).resolve("pdfjs-dist/legacy/build/pdf.mjs"),
+    // In a bundled lambda import.meta.url can point at a location with no
+    // node_modules above it. Resolving relative to the working directory
+    // covers that case.
+    () =>
+      createRequire(join(process.cwd(), "index.js")).resolve(
+        "pdfjs-dist/legacy/build/pdf.mjs",
+      ),
+  ];
 
-  return {
-    workerSrc: join(buildDir, "pdf.worker.mjs"),
-    // pdf.js expects a directory, with the trailing separator.
-    standardFontDataUrl: join(packageDir, "standard_fonts") + sep,
-  };
+  for (const resolveEntry of candidates) {
+    let entry: string;
+    try {
+      entry = resolveEntry();
+    } catch {
+      continue;
+    }
+
+    const buildDir = dirname(entry);
+    const packageDir = dirname(dirname(buildDir));
+    const workerSrc = join(buildDir, "pdf.worker.mjs");
+    if (!existsSync(workerSrc)) continue;
+
+    return {
+      workerSrc,
+      // pdf.js expects a directory, with the trailing separator.
+      standardFontDataUrl: join(packageDir, "standard_fonts") + sep,
+    };
+  }
+
+  // Fall through to pdf.js's own defaults rather than throwing: a wrong path
+  // is worse than no path, and the caller still surfaces a real error if
+  // parsing subsequently fails.
+  return null;
 }
 
 /**
@@ -140,10 +171,13 @@ export async function extractText(bytes: Uint8Array): Promise<ExtractedDocument>
   // module rather than being bundled.
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
-  const { workerSrc, standardFontDataUrl } = pdfjsAssetPaths();
   // Without an explicit path pdf.js falls back to "./pdf.worker.mjs" relative
-  // to its own module, which does not survive bundling.
-  pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+  // to its own module, which does not survive bundling. Null means the assets
+  // could not be located, in which case pdf.js keeps its own defaults.
+  const assets = pdfjsAssetPaths();
+  if (assets) {
+    pdfjs.GlobalWorkerOptions.workerSrc = assets.workerSrc;
+  }
 
   let pdf;
   try {
@@ -151,7 +185,9 @@ export async function extractText(bytes: Uint8Array): Promise<ExtractedDocument>
       data: bytes,
       isEvalSupported: false,
       useSystemFonts: true,
-      standardFontDataUrl,
+      ...(assets
+        ? { standardFontDataUrl: assets.standardFontDataUrl }
+        : undefined),
       // Fetch-based loading assumes a URL that does not exist server-side;
       // read the font files from disk instead.
       useWorkerFetch: false,
