@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { track } from "@/lib/analytics";
-import { relatedTools } from "@/lib/tools";
+import { CATEGORY_STYLES, relatedTools } from "@/lib/tools";
 
 interface RelatedToolsProps {
   slug: string;
@@ -52,7 +52,9 @@ export function RelatedTools({
             }
             className="flex items-center gap-2.5 rounded-xl border border-line bg-surface px-3 py-2.5 transition-colors duration-150 hover:border-line-strong"
           >
-            <span className="text-muted">
+            <span
+              className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg ${CATEGORY_STYLES[tool.category].tile}`}
+            >
               <Icon name={tool.icon} className="h-4 w-4" />
             </span>
             <span className="truncate text-[13px] font-medium text-ink">

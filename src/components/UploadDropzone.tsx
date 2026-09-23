@@ -79,7 +79,9 @@ export function UploadDropzone({ tool, onFiles, compact = false }: UploadDropzon
       onDrop={onDrop}
       className={[
         "relative rounded-2xl border-2 border-dashed text-center transition-colors duration-150",
-        compact ? "px-4 py-6" : "px-6 py-14 sm:py-20",
+        // Was py-14/sm:py-20, which left a tall empty box on every tool page.
+        // Still a large drop target, without the dead space above and below.
+        compact ? "px-4 py-5" : "px-6 py-9 sm:py-12",
         isDragging
           ? "border-accent bg-accent-soft"
           : "border-line-strong bg-surface hover:border-faint",

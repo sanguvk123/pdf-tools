@@ -3,6 +3,7 @@ import { ToolCard } from "@/components/ToolCard";
 import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
+  CATEGORY_STYLES,
   toolsInCategory,
 } from "@/lib/tools";
 
@@ -18,31 +19,46 @@ export const metadata: Metadata = {
 
 export default function AllToolsPage() {
   return (
-    <div className="mx-auto max-w-5xl px-5">
-      <header className="pt-14 pb-8 text-center sm:pt-20">
+    <div className="mx-auto max-w-6xl px-5">
+      <header className="pt-9 pb-6 text-center sm:pt-12">
         <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.03em] sm:text-[38px]">
           All tools
         </h1>
-        <p className="mx-auto mt-3 max-w-[44ch] text-[15px] text-muted">
+        <p className="mx-auto mt-2 max-w-[44ch] text-[15px] text-muted">
           Every operation is free, needs no account, and works the same way.
         </p>
       </header>
 
-      {CATEGORY_ORDER.map((category) => (
-        <section key={category} className="pb-10" aria-labelledby={category}>
-          <h2
-            id={category}
-            className="mb-3 text-[11px] font-semibold tracking-wide text-faint uppercase"
-          >
-            {CATEGORY_LABELS[category]}
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {toolsInCategory(category).map((tool) => (
-              <ToolCard key={tool.slug} tool={tool} />
-            ))}
-          </div>
-        </section>
-      ))}
+      {CATEGORY_ORDER.map((category) => {
+        const tools = toolsInCategory(category);
+        const style = CATEGORY_STYLES[category];
+
+        return (
+          <section key={category} className="pb-7" aria-labelledby={category}>
+            {/* A coloured marker ties the heading to the tiles below it, so
+                the four groups are distinguishable while scrolling rather
+                than relying on the reader tracking small grey labels. */}
+            <h2
+              id={category}
+              className="mb-2.5 flex items-center gap-2 text-[12px] font-semibold tracking-wide uppercase"
+            >
+              <span
+                aria-hidden="true"
+                className={`h-2.5 w-2.5 rounded-full ${style.dot}`}
+              />
+              <span className={style.text}>{CATEGORY_LABELS[category]}</span>
+              <span className="text-[11px] font-normal normal-case text-faint">
+                {tools.length} tools
+              </span>
+            </h2>
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+              {tools.map((tool) => (
+                <ToolCard key={tool.slug} tool={tool} />
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

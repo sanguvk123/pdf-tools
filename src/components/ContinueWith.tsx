@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { track } from "@/lib/analytics";
 import { setHandoff } from "@/lib/handoff";
-import { relatedTools, type Tool } from "@/lib/tools";
+import { CATEGORY_STYLES, relatedTools, type Tool } from "@/lib/tools";
 import { matchesAccept } from "@/lib/validate";
 
 /**
@@ -52,7 +52,9 @@ export function ContinueWith({
             }}
             className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3.5 py-3 text-left transition-colors duration-150 hover:border-line-strong"
           >
-            <span className="text-muted">
+            <span
+              className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${CATEGORY_STYLES[next.category].tile}`}
+            >
               <Icon name={next.icon} className="h-4 w-4" />
             </span>
             <span className="min-w-0">

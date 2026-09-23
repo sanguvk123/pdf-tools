@@ -17,7 +17,8 @@ import { track } from "@/lib/analytics";
 import { stripExtension } from "@/lib/format";
 import { takeHandoff } from "@/lib/handoff";
 import { matchesAccept } from "@/lib/validate";
-import type { Tool } from "@/lib/tools";
+import { Icon } from "@/components/Icon";
+import { CATEGORY_STYLES, type Tool } from "@/lib/tools";
 import type { ToolRunner } from "@/lib/useToolRunner";
 
 interface ToolShellProps {
@@ -111,12 +112,19 @@ export function ToolShell({
     <div
       className={
         showHeading
-          ? "mx-auto max-w-xl px-5 pt-10 pb-8 sm:pt-16"
-          : "mx-auto max-w-xl px-5 pb-8"
+          ? "mx-auto max-w-xl px-5 pt-7 pb-7 sm:pt-10"
+          : "mx-auto max-w-xl px-5 pb-7"
       }
     >
       {showHeading && (
         <header className="text-center">
+          {/* The tool's own icon, tinted by category — it identifies the page
+              at a glance and ties it to the card the user clicked. */}
+          <span
+            className={`mx-auto mb-3 grid h-11 w-11 place-items-center rounded-xl ${CATEGORY_STYLES[tool.category].tile}`}
+          >
+            <Icon name={tool.icon} className="h-[22px] w-[22px]" />
+          </span>
           <h1 className="text-[27px] leading-tight font-semibold tracking-[-0.03em] sm:text-[32px]">
             {tool.heading}
           </h1>
@@ -126,7 +134,7 @@ export function ToolShell({
         </header>
       )}
 
-      <div className="mt-8">
+      <div className="mt-6">
         {/* IDLE — the upload zone is the visual focus. */}
         {!hasFiles && state.status !== "ERROR" && (
           <>
