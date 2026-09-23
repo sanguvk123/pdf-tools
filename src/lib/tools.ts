@@ -243,6 +243,41 @@ export const TOOLS: Tool[] = [
     ],
   },
   {
+    slug: "pdf-to-png",
+    name: "PDF → PNG",
+    tagline: "Convert pages to PNG",
+    heading: "PDF to PNG",
+    subtitle: "Turn every page into a lossless PNG image.",
+    metaTitle: "PDF to PNG — Convert PDF pages to PNG online, free",
+    metaDescription:
+      "Convert PDF pages into high-quality PNG images. Lossless output keeps text and line art crisp. No signup, runs entirely on your device.",
+    category: "image",
+    icon: "image",
+    engine: "client",
+    accept: "application/pdf,.pdf",
+    acceptLabel: "PDF",
+    multiple: false,
+    maxFileSizeMb: 100,
+    action: "Convert to PNG",
+    actionProgressive: "Converting your pages",
+    successHeadline: "PNG images ready",
+    featured: false,
+    faq: [
+      {
+        q: "Why choose PNG over JPG?",
+        a: "PNG is lossless, so text, diagrams and line art stay perfectly sharp with no compression artefacts. The trade-off is a larger file. For pages that are mostly photos, JPG is usually the better choice.",
+      },
+      {
+        q: "Do PNGs keep a transparent background?",
+        a: "No. PDF pages are rendered on a white background so the image matches what you see in a PDF reader.",
+      },
+      {
+        q: "How do I get all the pages?",
+        a: "Multi-page PDFs are packaged as a ZIP, so every page arrives in a single download.",
+      },
+    ],
+  },
+  {
     slug: "jpg-to-pdf",
     name: "JPG → PDF",
     tagline: "Create a PDF from photos",
