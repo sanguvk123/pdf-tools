@@ -1,4 +1,6 @@
 import "server-only";
+import { createRequire } from "node:module";
+import { dirname, join, sep } from "node:path";
 import { ToolError } from "@/lib/errors";
 
 /**
@@ -40,6 +42,32 @@ interface Fragment {
  * typical body size.
  */
 const COLUMN_GAP_POINTS = 8;
+
+/**
+ * Absolute paths to the pdf.js runtime assets.
+ *
+ * pdf.js reaches for its worker and font files through dynamic imports and
+ * fetches that no bundler can trace statically. Locally that is invisible
+ * because the files sit in node_modules; in a serverless bundle only traced
+ * files are deployed, so the worker is missing and every document fails to
+ * open with a misleading "corrupt file" error.
+ *
+ * Resolving the real installed paths here makes the dependency explicit, so
+ * the file tracer includes them in the deployment.
+ */
+function pdfjsAssetPaths(): { workerSrc: string; standardFontDataUrl: string } {
+  const entry = createRequire(import.meta.url).resolve(
+    "pdfjs-dist/legacy/build/pdf.mjs",
+  );
+  const buildDir = dirname(entry);
+  const packageDir = dirname(dirname(buildDir));
+
+  return {
+    workerSrc: join(buildDir, "pdf.worker.mjs"),
+    // pdf.js expects a directory, with the trailing separator.
+    standardFontDataUrl: join(packageDir, "standard_fonts") + sep,
+  };
+}
 
 /**
  * Joins one row's fragments, preserving wide horizontal gaps as double
@@ -109,8 +137,13 @@ function groupIntoLines(items: TextItemLike[]): string[] {
 export async function extractText(bytes: Uint8Array): Promise<ExtractedDocument> {
   // The legacy build is the one that runs under Node without a DOM. pdfjs-dist
   // is declared in serverExternalPackages, so this resolves as a real Node
-  // module and pdf.js can load its own worker without bundler interference.
+  // module rather than being bundled.
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+
+  const { workerSrc, standardFontDataUrl } = pdfjsAssetPaths();
+  // Without an explicit path pdf.js falls back to "./pdf.worker.mjs" relative
+  // to its own module, which does not survive bundling.
+  pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
   let pdf;
   try {
@@ -118,10 +151,17 @@ export async function extractText(bytes: Uint8Array): Promise<ExtractedDocument>
       data: bytes,
       isEvalSupported: false,
       useSystemFonts: true,
+      standardFontDataUrl,
+      // Fetch-based loading assumes a URL that does not exist server-side;
+      // read the font files from disk instead.
+      useWorkerFetch: false,
     }).promise;
   } catch (error) {
     const name = error instanceof Error ? error.name : "";
     if (name === "PasswordException") throw new ToolError("PASSWORD_REQUIRED");
+    // Keep the underlying error as the cause: the route logs it, which is the
+    // only way an environment-specific failure like a missing worker file is
+    // distinguishable from a genuinely damaged upload.
     throw new ToolError("CORRUPT_FILE", undefined, { cause: error });
   }
 

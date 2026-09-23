@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { existsSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { extractText } from "@/server/extractText";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 
@@ -92,5 +96,43 @@ describe("extractText", () => {
     await expect(extractText(notAPdf)).rejects.toMatchObject({
       code: "CORRUPT_FILE",
     });
+  });
+
+  /**
+   * Regression: conversion worked locally but returned CORRUPT_FILE for every
+   * document once deployed.
+   *
+   * pdf.js pulls in its worker and font files through a dynamic import and a
+   * fetch that no bundler can trace. On a dev machine they are simply present
+   * in node_modules, so the gap is invisible; in a serverless bundle only
+   * traced files ship, the worker is missing, the dynamic import throws, and
+   * the catch reports it as a damaged upload.
+   *
+   * Asserting the resolved paths exist keeps the failure at build time rather
+   * than in production, where it looks like a user problem.
+   */
+  it("resolves a worker file that actually exists on disk", async () => {
+    pdfjs.GlobalWorkerOptions.workerSrc = "";
+    await extractText(await pdfWithLines([{ text: "x", x: 50, y: 700 }]));
+
+    const workerSrc = pdfjs.GlobalWorkerOptions.workerSrc;
+    expect(workerSrc, "extractText must set an explicit workerSrc").toBeTruthy();
+    expect(
+      existsSync(workerSrc),
+      `pdf.js worker not found at ${workerSrc} — it would be missing from a deployment bundle`,
+    ).toBe(true);
+  });
+
+  it("resolves a standard fonts directory that actually exists on disk", async () => {
+    // Mirrors how extractText derives the path, so the two cannot drift apart.
+    const entry = createRequire(import.meta.url).resolve(
+      "pdfjs-dist/legacy/build/pdf.mjs",
+    );
+    const fontsDir = join(dirname(dirname(dirname(entry))), "standard_fonts");
+
+    expect(
+      existsSync(fontsDir),
+      `standard fonts not found at ${fontsDir} — glyph widths would be wrong for non-embedded fonts`,
+    ).toBe(true);
   });
 });
