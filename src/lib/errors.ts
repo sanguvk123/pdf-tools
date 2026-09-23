@@ -25,8 +25,8 @@ export class ToolError extends Error {
   /** Extra context for the message, e.g. the size limit that was exceeded. */
   readonly detail?: string;
 
-  constructor(code: ToolErrorCode, detail?: string) {
-    super(code);
+  constructor(code: ToolErrorCode, detail?: string, options?: { cause?: unknown }) {
+    super(code, options);
     this.name = "ToolError";
     this.code = code;
     this.detail = detail;

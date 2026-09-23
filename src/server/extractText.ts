@@ -24,48 +24,92 @@ export interface ExtractedDocument {
 interface TextItemLike {
   str?: string;
   transform?: number[];
+  width?: number;
   hasEOL?: boolean;
+}
+
+interface Fragment {
+  x: number;
+  width: number;
+  text: string;
+}
+
+/**
+ * A horizontal gap wider than this, measured in points, is treated as a
+ * column boundary rather than a word space. Roughly two characters at a
+ * typical body size.
+ */
+const COLUMN_GAP_POINTS = 8;
+
+/**
+ * Joins one row's fragments, preserving wide horizontal gaps as double
+ * spaces. The spreadsheet builder relies on those gaps to find columns, so
+ * collapsing all whitespace here would silently merge every column together.
+ */
+function joinRow(fragments: Fragment[]): string {
+  const sorted = [...fragments].sort((a, b) => a.x - b.x);
+
+  let line = "";
+  let cursor: number | null = null;
+
+  for (const fragment of sorted) {
+    if (cursor !== null) {
+      const gap = fragment.x - cursor;
+      if (gap >= COLUMN_GAP_POINTS) {
+        line += "  ";
+      } else if (gap > 0.5 && !line.endsWith(" ")) {
+        line += " ";
+      }
+    }
+
+    line += fragment.text;
+    cursor = fragment.x + fragment.width;
+  }
+
+  // Collapse runs of three or more spaces to exactly two, so a single column
+  // boundary never looks like several.
+  return line.replace(/ {3,}/g, "  ").trim();
 }
 
 /** Groups text fragments into lines using their vertical position. */
 function groupIntoLines(items: TextItemLike[]): string[] {
-  const rows = new Map<number, { x: number; text: string }[]>();
+  const rows = new Map<number, Fragment[]>();
 
   for (const item of items) {
     const text = item.str ?? "";
+    // Whitespace-only fragments carry no characters, but their position is
+    // reconstructed from the gaps between neighbours, so they can be dropped.
     if (!text.trim()) continue;
 
     const transform = item.transform ?? [];
-    const x = transform[4] ?? 0;
-    const y = transform[5] ?? 0;
+    const fragment: Fragment = {
+      x: transform[4] ?? 0,
+      width: item.width ?? 0,
+      text,
+    };
 
     // Round the baseline so fragments on the same visual line group together
     // despite sub-pixel differences.
-    const row = Math.round(y);
+    const row = Math.round(transform[5] ?? 0);
     const existing = rows.get(row);
     if (existing) {
-      existing.push({ x, text });
+      existing.push(fragment);
     } else {
-      rows.set(row, [{ x, text }]);
+      rows.set(row, [fragment]);
     }
   }
 
   return [...rows.entries()]
     // PDF y-coordinates grow upwards, so descending y is top-to-bottom.
     .sort((a, b) => b[0] - a[0])
-    .map(([, fragments]) =>
-      fragments
-        .sort((a, b) => a.x - b.x)
-        .map((fragment) => fragment.text)
-        .join("")
-        .replace(/\s+/g, " ")
-        .trim(),
-    )
+    .map(([, fragments]) => joinRow(fragments))
     .filter((line) => line.length > 0);
 }
 
 export async function extractText(bytes: Uint8Array): Promise<ExtractedDocument> {
-  // The legacy build is the one that runs under Node without a DOM.
+  // The legacy build is the one that runs under Node without a DOM. pdfjs-dist
+  // is declared in serverExternalPackages, so this resolves as a real Node
+  // module and pdf.js can load its own worker without bundler interference.
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
   let pdf;
@@ -78,7 +122,7 @@ export async function extractText(bytes: Uint8Array): Promise<ExtractedDocument>
   } catch (error) {
     const name = error instanceof Error ? error.name : "";
     if (name === "PasswordException") throw new ToolError("PASSWORD_REQUIRED");
-    throw new ToolError("CORRUPT_FILE");
+    throw new ToolError("CORRUPT_FILE", undefined, { cause: error });
   }
 
   const pages: ExtractedPage[] = [];

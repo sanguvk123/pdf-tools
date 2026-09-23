@@ -64,6 +64,14 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    // Unexpected failures are logged server-side for diagnosis but never
+    // described to the client.
+    if (!(error instanceof ToolError)) {
+      console.error("[convert] unexpected failure", error);
+    } else if (error.code === "CORRUPT_FILE") {
+      console.error("[convert] corrupt file", error.detail, error.cause);
+    }
+
     // Only our own error codes cross the boundary. Anything unexpected is
     // reported as a generic failure so no internal detail leaks to the client.
     const code = error instanceof ToolError ? error.code : "UNKNOWN";

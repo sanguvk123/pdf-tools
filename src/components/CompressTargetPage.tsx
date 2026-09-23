@@ -1,28 +1,19 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { TargetCompressTool } from "./TargetCompressTool";
 import { Faq } from "@/components/Faq";
 import { RelatedTools } from "@/components/RelatedTools";
-import { COMPRESS_TARGETS, getCompressTarget } from "@/lib/compressTargets";
+import { TargetCompressTool } from "@/components/TargetCompressTool";
+import { COMPRESS_TARGETS, type CompressTarget } from "@/lib/compressTargets";
 
-/** Pre-renders one static page per size target. */
-export function generateStaticParams() {
-  return COMPRESS_TARGETS.map((target) => ({ size: target.slug }));
-}
+/**
+ * Shared implementation for the /compress-pdf-to-* landing pages.
+ *
+ * Next's App Router only treats a whole path segment as dynamic, so
+ * "compress-pdf-to-[size]" would be a literal folder name rather than a
+ * pattern. With a small fixed set of targets, an explicit route per size is
+ * both correct and better for SEO — and they all share this one component.
+ */
 
-export const dynamicParams = false;
-
-interface SizeParams {
-  params: Promise<{ size: string }>;
-}
-
-export async function generateMetadata({
-  params,
-}: SizeParams): Promise<Metadata> {
-  const { size } = await params;
-  const target = getCompressTarget(size);
-  if (!target) return {};
-
+export function buildTargetMetadata(target: CompressTarget): Metadata {
   const title = `Compress PDF to ${target.label} — free online compressor`;
   const description = `Reduce your PDF to ${target.label} or less so it fits email and upload limits. Free, no signup, and the file never leaves your device.`;
 
@@ -34,12 +25,8 @@ export async function generateMetadata({
   };
 }
 
-export default async function CompressToSizePage({ params }: SizeParams) {
-  const { size } = await params;
-  const target = getCompressTarget(size);
-  if (!target) notFound();
-
-  const faq = [
+function faqFor(target: CompressTarget) {
+  return [
     {
       q: `Can every PDF be compressed to ${target.label}?`,
       a: `Not always. A short text document will drop well below ${target.label}, but a long scanned file may not get there without removing pages. We tell you the exact size you ended up with, so you always know where you stand.`,
@@ -53,6 +40,10 @@ export default async function CompressToSizePage({ params }: SizeParams) {
       a: "No. Compression runs inside your browser, so the document never leaves your device.",
     },
   ];
+}
+
+export function CompressTargetPage({ target }: { target: CompressTarget }) {
+  const faq = faqFor(target);
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -81,9 +72,9 @@ export default async function CompressToSizePage({ params }: SizeParams) {
         </p>
       </div>
 
-      {/* The tool renders its own heading block, which we have replaced above,
-          so it starts directly at the upload zone. */}
-      <div className="[&_h1]:sr-only [&_h1+p]:sr-only">
+      {/* The tool renders its own heading, which this page replaces, so it is
+          hidden visually while remaining available to screen readers. */}
+      <div className="[&>div>header]:sr-only">
         <TargetCompressTool target={target} />
       </div>
 
