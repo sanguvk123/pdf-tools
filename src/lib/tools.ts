@@ -440,37 +440,6 @@ export const TOOLS: Tool[] = [
       },
     ],
   },
-  {
-    slug: "protect-pdf",
-    name: "Protect PDF",
-    tagline: "Add a password",
-    heading: "Protect PDF",
-    subtitle: "Lock your PDF with a password.",
-    metaTitle: "Protect PDF — Add a password to a PDF online, free",
-    metaDescription:
-      "Add a password to your PDF so only the right people can open it. Encryption happens on your device and the password is never sent anywhere.",
-    category: "pdf",
-    icon: "lock",
-    engine: "client",
-    accept: "application/pdf,.pdf",
-    acceptLabel: "PDF",
-    multiple: false,
-    maxFileSizeMb: 100,
-    action: "Protect PDF",
-    actionProgressive: "Protecting your PDF",
-    successHeadline: "PDF protected",
-    featured: false,
-    faq: [
-      {
-        q: "What happens if I forget the password?",
-        a: "Nobody can recover it, including us. Store the password somewhere safe before you share the file.",
-      },
-      {
-        q: "Is my password sent anywhere?",
-        a: "No. The document is encrypted inside your browser and the password never leaves your device.",
-      },
-    ],
-  },
 ];
 
 const BY_SLUG = new Map(TOOLS.map((tool) => [tool.slug, tool]));
