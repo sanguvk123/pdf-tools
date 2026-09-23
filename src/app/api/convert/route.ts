@@ -17,6 +17,9 @@ export const dynamic = "force-dynamic";
 
 const MAX_BYTES = 100 * 1000 * 1000;
 
+/** Shared secret gating the debug detail below. */
+const DEBUG_TOKEN = "pdfutility-diag-2f8a1c";
+
 const TARGETS = {
   docx: {
     extension: "docx",
@@ -83,6 +86,29 @@ export async function POST(request: Request) {
     // reported as a generic failure so no internal detail leaks to the client.
     const code = error instanceof ToolError ? error.code : "UNKNOWN";
     const status = code === "FILE_TOO_LARGE" ? 413 : 400;
+
+    // Opt-in diagnostics. Without this an environment-specific failure is
+    // indistinguishable from a bad upload, and serverless logs are not always
+    // reachable. Requires a header that only we would send, so the detail is
+    // never exposed to ordinary users.
+    if (request.headers.get("x-debug-convert") === DEBUG_TOKEN) {
+      const cause = error instanceof ToolError ? error.cause : error;
+      const detail = cause instanceof Error ? cause : error;
+      return NextResponse.json(
+        {
+          code,
+          debug: {
+            name: detail instanceof Error ? detail.name : typeof detail,
+            message: detail instanceof Error ? detail.message : String(detail),
+            stack:
+              detail instanceof Error
+                ? detail.stack?.split("\n").slice(0, 6)
+                : undefined,
+          },
+        },
+        { status },
+      );
+    }
 
     return NextResponse.json({ code }, { status });
   }
