@@ -83,6 +83,14 @@ async function execute(
         context,
       );
 
+    case "pdf-to-image":
+    case "images-to-pdf": {
+      // Image work needs canvas and pdf.js, kept in a separate module so this
+      // worker does not pull in the renderer unless a page actually uses it.
+      const { runImageOperation } = await import("@/workers/imageOperations");
+      return runImageOperation(op, files, options, context);
+    }
+
     default:
       throw new ToolError("UNKNOWN");
   }
