@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatBytes } from "@/lib/format";
+import { usePageCounts } from "@/lib/usePageCounts";
 
 interface FileListProps {
   files: File[];
@@ -24,6 +25,16 @@ export function FileList({
 }: FileListProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const pageCounts = usePageCounts(files);
+
+  const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+
+  // Zero until every count has arrived, so the total never briefly displays a
+  // partial sum that looks like a miscalculation.
+  const allCounted = files.every((file) => pageCounts.has(file));
+  const totalPages = allCounted
+    ? files.reduce((sum, file) => sum + (pageCounts.get(file) ?? 0), 0)
+    : 0;
 
   function move(from: number, to: number) {
     if (to < 0 || to >= files.length || from === to) return;
@@ -99,6 +110,16 @@ export function FileList({
               </span>
               <span className="block text-[12px] text-faint">
                 {formatBytes(file.size)}
+                {/* Omitted rather than shown as "0 pages" while the count is
+                    still being read, or when the file could not be parsed —
+                    a wrong number is worse than a missing one. */}
+                {(pageCounts.get(file) ?? 0) > 0 && (
+                  <>
+                    {" · "}
+                    {pageCounts.get(file)}{" "}
+                    {pageCounts.get(file) === 1 ? "page" : "pages"}
+                  </>
+                )}
               </span>
             </span>
 
@@ -169,6 +190,21 @@ export function FileList({
           </li>
         );
       })}
+
+      {/* Only for multi-file tools. On a single-file tool the card above
+          already says everything, and a summary of one file is noise. */}
+      {files.length > 1 && (
+        <li className="flex items-center justify-between px-1 pt-1 text-[12px] text-faint">
+          <span>
+            {files.length} files · {formatBytes(totalBytes)}
+          </span>
+          {totalPages > 0 && (
+            <span>
+              {totalPages} {totalPages === 1 ? "page" : "pages"} total
+            </span>
+          )}
+        </li>
+      )}
     </ul>
   );
 }
