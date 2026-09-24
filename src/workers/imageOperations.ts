@@ -185,9 +185,25 @@ export async function pdfToImages(
   // rather than at module scope.
   const pdfjs = await import("pdfjs-dist");
 
-  // The worker already runs off the main thread; disabling pdf.js's own worker
-  // avoids nesting a second one, which browsers do not universally support.
-  pdfjs.GlobalWorkerOptions.workerSrc = "";
+  // pdf.js needs a worker, and it will not fall back to running inline.
+  //
+  // This previously set workerSrc = "" on the reasoning that we are already
+  // inside a Web Worker and nesting another is unsupported. Both halves were
+  // wrong: nested workers do run in every browser we target, and an empty
+  // workerSrc does not mean "no worker" — getDocument() throws
+  //   No "GlobalWorkerOptions.workerSrc" specified.
+  // That landed in the catch below and was reported to the user as
+  // "We couldn't read this PDF. The file may be damaged." So pdf-to-jpg and
+  // pdf-to-png rejected every valid PDF, while blaming the document.
+  //
+  // workerPort is used rather than workerSrc because it takes a Worker built
+  // from new URL(..., import.meta.url) — the same idiom as clientEngine.ts,
+  // which the bundler rewrites to the real hashed asset path. A bare string
+  // would not survive the build.
+  pdfjs.GlobalWorkerOptions.workerPort = new Worker(
+    new URL("pdfjs-dist/build/pdf.worker.mjs", import.meta.url),
+    { type: "module" },
+  );
 
   let pdf;
   try {

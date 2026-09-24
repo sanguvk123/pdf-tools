@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local, uncommitted scratch space for manual testing against real files.
+    // It holds vendored minified bundles, which produce thousands of findings
+    // and would drown out anything real in src/.
+    "testdata/**",
   ]),
 ]);
 
